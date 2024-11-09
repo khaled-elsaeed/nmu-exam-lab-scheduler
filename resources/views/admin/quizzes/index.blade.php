@@ -99,15 +99,15 @@
                         </td>
                         <td>
                            <!-- Delete Quiz Button -->
-                           <button type="button" class="btn btn-round btn-danger-rgba delete-quiz-btn" 
+                           <button type="button" class="btn btn-round btn-danger delete-quiz-btn" 
                               title="Delete Quiz" data-quiz-id="{{ $quiz->id }}">
                            <i class="feather icon-trash-2"></i>
                            </button>
                            <!-- Export Quiz Button - Show only if status is accepted -->
                            @if($quiz->status == 'accepted')
-                           <button type="button" class="btn btn-round btn-info-rgba export-quiz-btn" 
+                           <button type="button" class="btn btn-round btn-info export-quiz-btn" 
                               title="Export Quiz" data-quiz-id="{{ $quiz->id }}">
-                           <i class="feather icon-download"></i> Export
+                           <i class="feather icon-download"></i>
                            </button>
                            @endif
                         </td>
@@ -228,11 +228,14 @@
    
    $(document).on('click', '.export-quiz-btn', function() {
    const quizId = $(this).data('quiz-id');
+   const quizBtn = $(this);
    
    // Construct the URL without extra slashes
    const exportUrl = "{{ route('admin.quizzes.export', ':id') }}".replace(':id', quizId);
    
-    
+   // Disable the button
+   quizBtn.prop('disabled', true);
+   
    $.ajax({
        url: exportUrl,
        type: 'GET',
@@ -240,8 +243,15 @@
            responseType: 'blob' 
        },
        success: function(response, status, xhr) {
-           const filename = xhr.getResponseHeader('Content-Disposition')
-                             .split('filename=')[1].replace(/"/g, '');
+           const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+           let filename = "downloaded_file"; // Default filename
+           if (contentDisposition) {
+               // Extract the filename from Content-Disposition header
+               const matches = contentDisposition.match(/filename="?([^"]+)"?/);
+               if (matches && matches[1]) filename = matches[1];
+           }
+           
+           // Create a download link
            const link = document.createElement('a');
            link.href = URL.createObjectURL(response);
            link.download = filename;
@@ -250,10 +260,14 @@
        },
        error: function(xhr) {
            swal('Error!', 'Failed to export the quiz.', 'error');
+       },
+       complete: function() {
+           // Re-enable the button after the request completes
+           quizBtn.prop('disabled', false);
        }
    });
-   });
-   
+});
+
    
    // Add Quiz Form Submission via AJAX
    $('#addQuizForm').on('submit', function(e) {
@@ -272,10 +286,15 @@
            processData: false,
            contentType: false,
            success: function(response) {
-   
-               swal('Success!', 'The quiz has been added.', 'success').then(() => {
-                   location.reload();
-               });
+             
+
+
+                swal('Success!', 'The quiz has been added.', 'success')
+                .then(() => {
+                    $('#addQuizModal').modal('hide');
+                    location.reload(); // Reload page to see new slots
+
+                });
            },
            error: function(xhr) {
                submitButton.removeClass('loading').prop('disabled', false);
@@ -307,9 +326,16 @@
            processData: false,
            contentType: false,
            success: function(response) {
-               swal('Success!', 'The course has been added.', 'success').then(() => {
-                   location.reload();
-               });
+
+                swal('Success!', 'The course has been added.', 'success')
+                .then(() => {
+                    $('#addCourseModal').modal('hide');
+                    location.reload(); // Reload page to see new slots
+
+                });
+
+
+              
            },
            error: function(xhr) {
                submitButton.removeClass('loading').prop('disabled', false);

@@ -250,12 +250,10 @@
                 quiz_id: quizId
             },
             success: function(response) {
-                swal({
-                    title: 'Success!',
-                    text: 'Session reserved successfully!',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
+              
+
+                swal('Success!', 'Session reserved successfully!', 'success')
+                .then(() => {
                     $('#reserveModal').modal('hide');
                     location.reload(); // Reload page to see new slots
 
