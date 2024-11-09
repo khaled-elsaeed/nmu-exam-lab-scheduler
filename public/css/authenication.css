@@ -1,0 +1,220 @@
+/* Background Styling */
+.authenticate-bg {
+    background: url(../images/authentication/authentication-bg.svg);
+    background-size: cover;
+    background-position: center;
+    max-height: calc(100vh - 50px);
+}
+
+/* General Box Layout */
+.auth-box > .row {
+    height: 100vh;
+}
+
+/* Left Side Styling */
+.auth-box .auth-box-left .card {
+    background: linear-gradient(-90deg, #8a51ff 0, #ac45ff 100%);
+    border-radius: 3px 0 0 3px;
+}
+
+.auth-box .auth-box-left .card .card-body {
+    padding: 30px;
+}
+
+.auth-box .auth-box-left .auth-box-icon {
+    margin: 83px 0;
+}
+
+.auth-box .auth-box-left .auth-box-logo {
+    width: 150px;
+}
+
+/* Right Side Styling */
+.auth-box .auth-box-right .card {
+    text-align: center;
+    border-radius: 15px;
+}
+
+.auth-box .auth-box-right .card .card-body {
+    padding: 30px;
+}
+
+.auth-box .auth-box-right .web-logo img {
+    margin: 30px 0;
+}
+
+.auth-box .auth-box-right .user-logo {
+    position: relative;
+    z-index: 999;
+}
+
+.auth-box .auth-box-right .user-logo img {
+    height: 80px;
+    width: 80px;
+}
+
+.auth-box .auth-box-right .form-head {
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.auth-box .auth-box-right .form-head img {
+    width: 150px;
+}
+
+/* Login*/
+
+.form-label {
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.form-control-icon {
+    font-size: 1.2rem;
+}
+
+
+
+.auth-box .auth-box-right .login-or {
+    position: relative;
+    text-align: center;
+    margin-top: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.auth-box .auth-box-right .login-or:before,
+.auth-box .auth-box-right .login-or:after {
+    content: "";
+    background: rgba(0, 0, 0, 0.03);
+    height: 1px;
+    width: 45%;
+    position: absolute;
+    top: 45%;
+}
+
+.auth-box .auth-box-right .login-or:before {
+    left: 0;
+}
+
+.auth-box .auth-box-right .login-or:after {
+    right: 0;
+}
+
+.auth-box-right {
+    height: 100vh;
+    align-content: center;
+}
+
+.auth-box-left {
+    height: 100vh;
+}
+
+.auth-logo {
+    display: flex;                  
+    justify-content: center;        
+    align-items: center;            
+    margin: 10px 0;                
+    position: relative;             
+    top: -90px;                    
+    width: 110px;                   
+    height: 110px;                  
+    background-color: #f2f5fa;        
+    border-radius: 50%;             
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    margin-bottom: -50px;
+}
+
+h4.text-primary {
+    margin-top: 5px;             
+    margin-bottom: 10px;          
+}
+
+/* Forgot Password */
+.auth-box .auth-box-right .forgot-psw {
+    text-align: right;
+}
+
+/* Footer Styling */
+.footer {
+    margin: 0;
+}
+
+/* Media Queries */
+@media (max-width: 767px) {
+    .auth-box > .row {
+        height: auto;
+    }
+
+    .auth-box-right {
+        padding-top: 10px;
+        align-content: start !important;
+    }
+
+    .auth-box .auth-box-left .card {
+        border-radius: 3px 3px 0 0;
+    }
+
+    .auth-box .auth-box-left .auth-box-icon {
+        margin: 30px 0;
+    }
+
+    .auth-box .auth-box-left .auth-box-icon img {
+        width: 150px;
+    }
+
+    .auth-box .auth-box-left .auth-box-logo {
+        width: 100px;
+    }
+
+    .auth-box .auth-box-left h4 {
+        font-size: 22px;
+    }
+
+    .auth-box .auth-box-right .card {
+        border-radius: 0 0 3px 3px;
+    }
+
+    .auth-box .auth-box-right h4 {
+        font-size: 22px;
+    }
+
+    
+}
+
+@media (width:768px){
+    .auth-logo{
+        margin-bottom: -100px;
+    }
+
+    .auth-box-right h4{
+        margin-top: 25px;
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 575px) {
+    .auth-box .auth-box-right .forgot-psw {
+        text-align: left;
+    }
+
+    .auth-box .auth-box-right .card {
+        margin-top: 50px;
+    }
+
+    /* Override margin-top for small screens */
+    .mt-2 {
+        margin-top: 0 !important;
+    }
+
+    .sign-up-footer{
+                margin-top: 100px !important;
+    }
+}
+
+
+
+
+
+
+

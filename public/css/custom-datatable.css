@@ -1,0 +1,122 @@
+/* Base styles for the entire table card */
+.table-card {
+    background-color: transparent !important;
+}
+
+/* Header styles for the DataTable */
+#default-datatable thead tr th {
+    background-color: #923f47 !important;
+    color: white !important;
+}
+
+#default-datatable {
+    width: 100% !important;
+    max-width: 100%;
+    border-collapse: collapse; /* Ensures borders are collapsed into a single border */
+    border-left: 2px solid #8C2F39; /* Outer left border */
+    border-right: 2px solid #8C2F39; /* Outer right border */
+    border-bottom: 2px solid #8C2F39; /* Outer bottom border */
+    border-top: none; /* Optional: No top border */
+}
+
+#default-datatable thead th {
+    border-top: none; /* Ensures no top border on the header */
+}
+
+/* Optional: Add a bottom border to the last row for a cleaner look */
+#default-datatable tbody tr:last-child {
+    border-bottom: none; /* This ensures no extra bottom border on the last row */
+}
+
+
+/* Hide the first row and first div of the DataTable wrapper */
+#default-datatable_wrapper > div:first-child {
+    display: none;
+}
+
+/* Padding adjustments for table and wrapper */
+.table-container {
+    padding: 0 !important;
+}
+
+#default-datatable_wrapper {
+    padding: 0 !important;
+}
+
+/* Toggle button icon styles */
+.toggle-btn i {
+    transition: transform 0.3s ease;
+    font-size: 1.5rem; /* Adjust icon size */
+}
+
+/* Prevent icon rotation when collapsed */
+.toggle-btn.collapsed i {
+    transform: rotate(180deg);
+}
+
+.toggle-btn i {
+    transition: none !important; /* Disable transition effects */
+    transform: none !important;  /* Remove any transformation effects */
+}
+
+/* Styles for the collapsible search section */
+.collapse {
+    margin-bottom: 20px;
+}
+
+/* Container with Border */
+.search-filter-container {
+   background-color: transparent;
+   border: 2px solid #931a23;
+   padding: 1rem;
+   border-radius: 8px;
+   margin-bottom: 1rem;
+}
+
+/* Search Box Styling */
+.search-container {
+   display: flex;
+   align-items: center;
+   gap: 5px;
+   border: 1px solid #931a23;
+   border-radius: 4px;
+   padding: 0;
+   overflow: hidden;
+   background-color: #fff; /* Background for search box */
+   width: 100%;
+   max-width: 500px; /* Optional: adjust max width */
+}
+
+.search-icon-container {
+   background-color: #931a23;
+   padding: 1rem;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.search-icon {
+   color: #fff; /* White icon color */
+}
+
+.search-input {
+   border: none;
+   outline: none;
+   padding: 0.7rem;
+   flex: 1;
+}
+
+/* Filters Styling */
+.filters-container {
+    gap: 10px;
+ }
+ 
+ /* Make dropdowns wider */
+ .form-select {
+    border: 1px solid #931a23;
+    border-radius: 4px;
+    padding: 0.4rem;
+    width: 200px; /* Set the desired width here */
+    /* For full width within the container, use width: 100%; */
+ }
+ 
