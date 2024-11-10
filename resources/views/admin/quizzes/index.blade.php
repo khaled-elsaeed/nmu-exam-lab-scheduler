@@ -121,70 +121,90 @@
       </div>
    </div>
 </div>
-<!-- Add Quiz Modal -->
-<div class="modal fade" id="addQuizModal" tabindex="-1" role="dialog" aria-labelledby="addQuizModalLabel" aria-hidden="true">
+  <!-- Add Quiz Modal -->
+  <div class="modal fade" id="addQuizModal" tabindex="-1" role="dialog" aria-labelledby="addQuizModalLabel" aria-hidden="true">
    <div class="modal-dialog" role="document">
       <form id="addQuizForm" method="POST" enctype="multipart/form-data">
          @csrf
          <div class="modal-content">
             <div class="modal-header">
                <h5 class="modal-title" id="addQuizModalLabel">Add New Quiz</h5>
-               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close">
+               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-            <!-- Quiz Details Section -->
-            <div class="form-group">
-            <label for="title">Quiz Title</label>
-            <input type="text" class="form-control" name="title" required>
-            </div>
-            <div class="form-group">
-            <label for="course_id">Select Course</label>
-            <select class="form-control" name="course_id" required>
-            <option value="">Select Course</option>
-            @forelse($courses as $course)
-            <option value="{{ $course->id }}">{{ $course->name }}</option>
-            @empty
-            <option value="" disabled>No courses available. Please add a course first.</option>
-            @endforelse
-            </select>
-            </div>
-            <div class="form-group">
-            <label for="students_file">Upload Students (Excel)</label>
-            <input type="file" class="form-control" name="students_file" accept=".xlsx, .xls" required>
-            </div>
+               <!-- Faculty Selection -->
+               <div class="form-group">
+                  <label for="faculty">Select Faculty</label>
+                  <select class="form-control" id="faculty" name="faculty" required>
+                     <option value="" disabled selected>Select Faculty</option>
+                     @foreach($faculties as $faculty)
+                         <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
+                     @endforeach
+                  </select>
+               </div>
+               
+               <!-- Course Selection (dynamically populated) -->
+               <div class="form-group">
+                  <label for="course_id">Select Course</label>
+                  <select class="form-control" id="course_id" name="course_id" required disabled>
+                     <option value="">Select Course</option>
+                  </select>
+               </div>
+               
+               <!-- Quiz Details Section -->
+               <div class="form-group">
+                  <label for="title">Quiz Title</label>
+                  <input type="text" class="form-control" name="title" required>
+               </div>
+               <div class="form-group">
+                  <label for="students_file">Upload Students (Excel)</label>
+                  <input type="file" class="form-control" name="students_file" accept=".xlsx, .xls" required>
+               </div>
             </div>
             <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary">Save Quiz</button>
+               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+               <button type="submit" class="btn btn-primary">Save Quiz</button>
             </div>
          </div>
       </form>
    </div>
 </div>
+
 <!-- Add Course Modal -->
-<div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModalLabel" aria-hidden="true" >
+<div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModalLabel" aria-hidden="true">
    <div class="modal-dialog" role="document">
       <form id="addCourseForm" method="POST" enctype="multipart/form-data">
          @csrf
          <div class="modal-content">
             <div class="modal-header">
                <h5 class="modal-title" id="addCourseModalLabel">Add New Course</h5>
-               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close">
+               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-            <!-- Course Details Section -->
-            <div class="form-group">
-            <label for="course_code">Course Code</label>
-            <input type="text" class="form-control" name="course_code" required>
-            </div>
-            <div class="form-group">
-            <label for="course_name">Course Name</label>
-            <input type="text" class="form-control" name="course_name" required>
-            </div>
+               <!-- Faculty Selection Section -->
+               <div class="form-group">
+                  <label for="faculty">Select Faculty</label>
+                  <select class="form-control" id="faculty" name="faculty" required>
+                     <option value="" disabled selected>Select Faculty</option>
+                     @foreach($faculties as $faculty)
+                         <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
+                     @endforeach
+                  </select>
+               </div>
+               
+               <!-- Course Details Section -->
+               <div class="form-group">
+                  <label for="course_code">Course Code</label>
+                  <input type="text" class="form-control" name="course_code" id="course_code" required>
+               </div>
+               <div class="form-group">
+                  <label for="course_name">Course Name</label>
+                  <input type="text" class="form-control" name="course_name" id="course_name" required>
+               </div>
             </div>
             <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary">Save Course</button>
+               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+               <button type="submit" class="btn btn-primary">Save Course</button>
             </div>
          </div>
       </form>
@@ -349,6 +369,51 @@
            }
        });
    });
+
+
+ 
+
+      $('#faculty').on('change', function() {
+         var facultyId = $(this).val();
+         var courseDropdown = $('#course_id');
+         
+         // Clear previous options
+         courseDropdown.html('<option value="">Select Course</option>');
+         console.log('khaleed');
+         
+         if (facultyId) {
+            // Enable course dropdown
+            courseDropdown.prop('disabled', false);
+            
+            // Get route URL with placeholder and replace 'FAKE_ID' with the selected faculty ID
+            var url = @json(route('get.courses.by.faculty', ['facultyId' => 'FAKE_ID'])).replace('FAKE_ID', facultyId);
+
+            // Fetch courses for the selected faculty
+            $.ajax({
+               url: url,
+               type: 'GET',
+               dataType: 'json',
+               success: function(courses) {
+                  if (courses.length > 0) {
+                     $.each(courses, function(index, course) {
+                        courseDropdown.append('<option value="' + course.id + '">' + course.name + '</option>');
+                     });
+                  } else {
+                     courseDropdown.html('<option value="" disabled>No courses available for this faculty</option>');
+                  }
+               },
+               error: function() {
+                  console.error('Error fetching courses');
+                  courseDropdown.html('<option value="" disabled>Error loading courses</option>');
+               }
+            });
+         } else {
+            // Disable course dropdown if no faculty is selected
+            courseDropdown.prop('disabled', true);
+         }
+      });
+
+
    
    // Delete Quiz with Confirmation
    $(document).on('click', '.delete-quiz-btn', function() {

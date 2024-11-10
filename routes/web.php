@@ -69,14 +69,22 @@ Route::middleware(['auth'])->group(function () {
 
     });
 
-    Route::get('/admin/quizzes/{quiz}/export', [QuizController::class, 'export'])->name('admin.quizzes.export');
+// Route to export quizzes for admin
+Route::get('/admin/quizzes/{quiz}/export', [QuizController::class, 'export'])->name('admin.quizzes.export');
+
+// Route to get quizzes by course
+Route::get('/admin/courses/{course}/quizzes', [QuizController::class, 'getQuizzesByCourse'])->name('admin.courses.quizzes');
 
 
 // Route to store a newly created course with a name
     Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+    // web.php
+// web.php
+Route::get('/courses/{facultyId}', [CourseController::class, 'getCoursesByFaculty'])->name('get.courses.by.faculty');
 
 // Route to delete a course with a name
     Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+
 
 
     Route::get('sessions', [DurationSessionController::class, 'index'])->name('sessions.index');

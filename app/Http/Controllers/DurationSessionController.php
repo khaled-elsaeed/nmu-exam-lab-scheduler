@@ -7,6 +7,8 @@ use App\Models\DurationSession;
 use App\Models\Quiz;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\Faculty;
+
 use Illuminate\Support\Facades\Log;
 
 class DurationSessionController extends Controller
@@ -62,6 +64,8 @@ class DurationSessionController extends Controller
     public function reserve()
     {
         try {
+            $faculties  = Faculty::all();
+
             $quizzes = Quiz::all();
             $sessions = DurationSession::with('labs', 'slots')->get();
             $totalSessions = $sessions->count();
@@ -107,7 +111,7 @@ class DurationSessionController extends Controller
                 return $session->slots->count();
             });
 
-            return view('admin.sessions.reserve', compact('sessions', 'totalSessions', 'totalSlots', 'results', 'quizzes'));
+            return view('admin.sessions.reserve', compact('sessions', 'totalSessions', 'totalSlots', 'results','faculties', 'quizzes'));
         } catch (\Exception $e) {
             Log::error('Error retrieving reservation data: ' . $e->getMessage(), [
                 'exception' => $e

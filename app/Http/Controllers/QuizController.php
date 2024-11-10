@@ -20,25 +20,25 @@ class QuizController extends Controller
 {
     public function index()
     {
-        $courses = $this->getCoursesForAuthenticatedFaculty();
+        $faculties  = Faculty::all();
         $examDuration = ExamSetting::pluck('time_slot_duration')->first();
         $quizzes = Quiz::with(['course', 'slots.session'])->get();
 
-        return view('admin.quizzes.index', compact('quizzes', 'examDuration', 'courses'));
+        return view('admin.quizzes.index', compact('quizzes', 'examDuration','faculties'));
     }
 
-    private function getCoursesForAuthenticatedFaculty()
-    {
-        $user = auth()->user();
+    // private function getCoursesForAuthenticatedFaculty()
+    // {
+    //     $user = auth()->user();
         
-        if ($user && $user->hasRole('faculty')) {
-            return Course::whereHas('faculty', function ($query) use ($user) {
-                $query->where('name', $this->getFacultyNameForUserRole());
-            })->get();
-        }
+    //     if ($user && $user->hasRole('faculty')) {
+    //         return Course::whereHas('faculty', function ($query) use ($user) {
+    //             $query->where('name', $this->getFacultyNameForUserRole());
+    //         })->get();
+    //     }
 
-        abort(403, 'Unauthorized access. Only faculty can view courses.');
-    }
+    //     abort(403, 'Unauthorized access. Only faculty can view courses.');
+    // }
 
     private function getFacultyNameForUserRole()
     {
@@ -79,6 +79,7 @@ class QuizController extends Controller
             'course_id' => 'required|exists:courses,id',
             'title' => 'required|string|max:255',
             'students_file' => 'required|file|mimes:xlsx,xls',
+            'faculty' => 'required|int'
         ]);
 
         if (Quiz::where('course_id', $validated['course_id'])->exists()) {
@@ -110,19 +111,36 @@ class QuizController extends Controller
 
     private function handleFileUpload(Request $request, Quiz $quiz)
     {
-        $facultyName = $this->getFacultyNameForUserRole();
+        // Get faculty name from the authenticated user or from the request
+        $facultyId = $request->input('faculty'); // Faculty ID passed from the request
+        $faculty = Faculty::find($facultyId);  // Find the faculty by ID
+    
+        if ($faculty) {
+            // Use the faculty name from the found faculty record
+            $facultyName = $faculty->name;
+        } else {
+            // Fallback in case faculty is not found
+            $facultyName = 'unknown_faculty';
+        }
+    
+        // Prepare faculty folder path
         $facultyFolderPath = storage_path('app/temp_uploads/' . Str::slug($facultyName));
-
+    
+        // Create folder if it doesn't exist
         if (!file_exists($facultyFolderPath)) {
             mkdir($facultyFolderPath, 0777, true);
         }
-
+    
+        // Proceed with importing students from Excel
         $this->importStudentsFromExcel($request->file('students_file'));
-
+    
+        // Assign students to the quiz
         $this->assignStudentsToQuiz($quiz);
-
+    
+        // Store the uploaded file in the appropriate folder
         $this->storeUploadedFile($request, $facultyFolderPath);
     }
+    
 
     private function importStudentsFromExcel($file)
     {
@@ -174,4 +192,11 @@ class QuizController extends Controller
         $examExport = new ExamExport();
         return $examExport->downloadExcel($id);
     }
+
+    public function getQuizzesByCourse(Request $request)
+{
+    $courseId = $request->course_id;
+    $quizzes = Quiz::where('course_id', $courseId)->get();
+    return response()->json(['quizzes' => $quizzes]);
+}
 }

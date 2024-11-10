@@ -30,6 +30,14 @@
                     </a>
                 </li>
                 <!-- Sessions Section for Admin -->
+
+                <li>
+                    <a href="{{ route('admin.quizzes.index') }}">
+                        <img src="{{ asset('images/svg-icon/tables.svg') }}" class="img-fluid" alt="quizzes">
+                        <span>Quizzes</span>
+                    </a>
+                </li>
+
                 <li>
                     <a href="#">
                         <img src="{{ asset('images/svg-icon/layouts.svg') }}" class="img-fluid" alt="sessions">
@@ -38,28 +46,15 @@
                     </a>
                     <ul class="vertical-submenu">
                         <li><a href="{{ route('sessions.index') }}">View sessions</a></li>
+                        <li><a href="{{ route('sessions.reserve') }}">Reserve</a></li>
+
                         <li><a href="{{ route('sessions.withQuizzes') }}">Reservations</a></li>
                     </ul>
                 </li>
             @endif
 
             <!-- Quizzes Section (Visible only for 'faculty' role) -->
-            @if(auth()->user()->hasRole('faculty'))
-                <li>
-                    <a href="{{ route('admin.quizzes.index') }}">
-                        <img src="{{ asset('images/svg-icon/tables.svg') }}" class="img-fluid" alt="quizzes">
-                        <span>Quizzes</span>
-                    </a>
-                </li>
-                <!-- Sessions Section for Faculty -->
-                <li>
-                    <a href="{{ route('sessions.reserve') }}">
-                        <img src="{{ asset('images/svg-icon/layouts.svg') }}" class="img-fluid" alt="Sessions">
-                        <span>Sessions</span>
-                    </a>
-                </li>
-            @endif
-
+        
             <!-- Logout Link -->
             <li>
                 <a href="#" onclick="logout()">

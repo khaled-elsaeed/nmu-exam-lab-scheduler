@@ -14,6 +14,7 @@ class CourseController extends Controller
         $validated = $request->validate([
             'course_name' => 'required|string',
             'course_code' => 'required|string',
+            'faculty' => 'required|int',
         ]);
 
         try {
@@ -25,12 +26,11 @@ class CourseController extends Controller
                 return response()->json(['message' => 'Course name already exists!'], 400);
             }
 
-            $faculty_id = $this->getFacultyIdForUserRole($validated);
 
             $course = Course::create([
                 'name' => $validated['course_name'],
                 'code' => $validated['course_code'],
-                'faculty_id' => $faculty_id,
+                'faculty_id' => $validated['faculty'],
             ]);
 
             return response()->json(['message' => 'Course created successfully!', 'course' => $course], 201);
@@ -83,4 +83,13 @@ class CourseController extends Controller
             throw $e; 
         }
     }
+
+
+    // In your controller
+    public function getCoursesByFaculty($facultyId)
+    {
+        $courses = Course::where('faculty_id', $facultyId)->get();
+        return response()->json($courses);
+    }
+
 }
