@@ -68,6 +68,7 @@
                         <th>Duration</th>
                         <th>Status</th>
                         <th>Session</th>
+                        <th>Students</th>
                         <th>Actions</th>
                      </tr>
                   </thead>
@@ -97,6 +98,7 @@
                            <span class="text-muted">Not Reserved Yet</span>
                            @endif
                         </td>
+                        <td> {{ $quiz->students->count() }}</td>
                         <td>
                            <!-- Delete Quiz Button -->
                            <button type="button" class="btn btn-round btn-danger delete-quiz-btn" 
@@ -122,7 +124,7 @@
    </div>
 </div>
   <!-- Add Quiz Modal -->
-  <div class="modal fade" id="addQuizModal" tabindex="-1" role="dialog" aria-labelledby="addQuizModalLabel" aria-hidden="true">
+<div class="modal fade" id="addQuizModal" tabindex="-1" role="dialog" aria-labelledby="addQuizModalLabel" aria-hidden="true">
    <div class="modal-dialog" role="document">
       <form id="addQuizForm" method="POST" enctype="multipart/form-data">
          @csrf
@@ -132,14 +134,22 @@
                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-               <!-- Faculty Selection -->
+               <!-- Faculty Selection Section -->
                <div class="form-group">
                   <label for="faculty">Select Faculty</label>
-                  <select class="form-control" id="faculty" name="faculty" required>
-                     <option value="" disabled selected>Select Faculty</option>
-                     @foreach($faculties as $faculty)
-                         <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
-                     @endforeach
+                  <select class="form-control" id="faculty" name="faculty" required
+                      @if(auth()->user() && auth()->user()->hasRole('faculty')) disabled @endif>
+                     @if(auth()->user() && auth()->user()->hasRole('faculty'))
+                         <!-- If the user is a faculty, preselect their faculty and make it disabled -->
+                         <option value="{{ auth()->user()->faculty_id }}" selected>
+                             {{ auth()->user()->faculty->name }}
+                         </option>
+                     @else
+                         <option value="" disabled selected>Select Faculty</option>
+                         @foreach($faculties as $faculty)
+                             <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
+                         @endforeach
+                     @endif
                   </select>
                </div>
                
@@ -170,6 +180,7 @@
    </div>
 </div>
 
+
 <!-- Add Course Modal -->
 <div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModalLabel" aria-hidden="true">
    <div class="modal-dialog" role="document">
@@ -184,11 +195,19 @@
                <!-- Faculty Selection Section -->
                <div class="form-group">
                   <label for="faculty">Select Faculty</label>
-                  <select class="form-control" id="faculty" name="faculty" required>
-                     <option value="" disabled selected>Select Faculty</option>
-                     @foreach($faculties as $faculty)
-                         <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
-                     @endforeach
+                  <select class="form-control" id="faculty" name="faculty" required 
+                      @if(auth()->user() && auth()->user()->hasRole('faculty')) disabled @endif>
+                     @if(auth()->user() && auth()->user()->hasRole('faculty'))
+                         <!-- If the user is a faculty, preselect their faculty and make it disabled -->
+                         <option value="{{ auth()->user()->faculty_id }}" selected>
+                             {{ auth()->user()->faculty->name }}
+                         </option>
+                     @else
+                         <option value="" disabled selected>Select Faculty</option>
+                         @foreach($faculties as $faculty)
+                             <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
+                         @endforeach
+                     @endif
                   </select>
                </div>
                
@@ -210,6 +229,7 @@
       </form>
    </div>
 </div>
+
 @endsection
 @section('scripts')
 <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
@@ -373,46 +393,61 @@
 
  
 
-      $('#faculty').on('change', function() {
-         var facultyId = $(this).val();
-         var courseDropdown = $('#course_id');
-         
-         // Clear previous options
-         courseDropdown.html('<option value="">Select Course</option>');
-         console.log('khaleed');
-         
-         if (facultyId) {
-            // Enable course dropdown
-            courseDropdown.prop('disabled', false);
-            
-            // Get route URL with placeholder and replace 'FAKE_ID' with the selected faculty ID
-            var url = @json(route('get.courses.by.faculty', ['facultyId' => 'FAKE_ID'])).replace('FAKE_ID', facultyId);
+   var facultyId = $('#faculty').val();  // Get the currently selected faculty (if any)
 
-            // Fetch courses for the selected faculty
-            $.ajax({
-               url: url,
-               type: 'GET',
-               dataType: 'json',
-               success: function(courses) {
-                  if (courses.length > 0) {
-                     $.each(courses, function(index, course) {
-                        courseDropdown.append('<option value="' + course.id + '">' + course.name + '</option>');
-                     });
-                  } else {
-                     courseDropdown.html('<option value="" disabled>No courses available for this faculty</option>');
-                  }
-               },
-               error: function() {
-                  console.error('Error fetching courses');
-                  courseDropdown.html('<option value="" disabled>Error loading courses</option>');
-               }
-            });
-         } else {
-            // Disable course dropdown if no faculty is selected
-            courseDropdown.prop('disabled', true);
-         }
-      });
+// If the faculty is already selected (e.g., the user is a faculty member and the faculty dropdown is pre-selected)
+if (facultyId) {
+    loadCourses(facultyId);  // Load courses for the pre-selected faculty
+}
 
+// Listen for changes in faculty dropdown (if enabled)
+$('#faculty').on('change', function() {
+    var facultyId = $(this).val();
+    var courseDropdown = $('#course_id');
+
+    // Clear previous options
+    courseDropdown.html('<option value="">Select Course</option>');
+
+    if (facultyId) {
+        // Enable course dropdown if faculty is selected
+        courseDropdown.prop('disabled', false);
+
+        // Fetch courses for the selected faculty
+        loadCourses(facultyId);
+    } else {
+        // Disable course dropdown if no faculty is selected
+        courseDropdown.prop('disabled', true);
+    }
+});
+
+// Function to load courses based on faculty ID
+function loadCourses(facultyId) {
+    var courseDropdown = $('#course_id');
+
+    // Make AJAX call to get courses for the selected faculty
+    var url = @json(route('get.courses.by.faculty', ['facultyId' => 'FAKE_ID'])).replace('FAKE_ID', facultyId);
+
+    $.ajax({
+        url: url,
+        type: 'GET',
+        dataType: 'json',
+        success: function(courses) {
+            if (courses.length > 0) {
+                $.each(courses, function(index, course) {
+                    courseDropdown.append('<option value="' + course.id + '">' + course.name + '</option>');
+                });
+                courseDropdown.prop('disabled', false);
+
+            } else {
+                courseDropdown.html('<option value="" disabled>No courses available for this faculty</option>');
+            }
+        },
+        error: function() {
+            console.error('Error fetching courses');
+            courseDropdown.html('<option value="" disabled>Error loading courses</option>');
+        }
+    });
+}
 
    
    // Delete Quiz with Confirmation

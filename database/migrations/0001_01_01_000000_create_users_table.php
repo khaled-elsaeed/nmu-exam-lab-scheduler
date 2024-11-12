@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('email', 100)->unique();     
             $table->string('password');                  
-            $table->string('username');               
+            $table->string('username');  
+            $table->foreignId('faculty_id')->nullable()->constrained('faculties')->onDelete('cascade');              
             $table->timestamp('last_login')->nullable(); 
             $table->softDeletes();                        
             $table->timestamps();                         

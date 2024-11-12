@@ -29,9 +29,10 @@ public function slots()
 
 public function students()
 {
-    return $this->belongsToMany(Student::class, 'quiz_student')
-                ->withTimestamps();  
+    return $this->belongsToMany(Student::class, 'quiz_student');  
 }
+
+
 
 
 public function slotStudents()

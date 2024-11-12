@@ -63,8 +63,6 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        
-
         .btn-reject {
             background-color: #e74c3c;
         }
@@ -115,7 +113,10 @@
                         @foreach($sessions as $sessionWithQuiz)
                             <div class="session-wrapper">
                                 <div class="session-card">
-                                    <h5 class="session-time">{{ $sessionWithQuiz['session']->start_time }} to {{ $sessionWithQuiz['session']->end_time }}</h5>
+                                    <h5 class="session-time">
+                                        {{ \Carbon\Carbon::parse($sessionWithQuiz['session']->start_time)->format('h:i A') }} to 
+                                        {{ \Carbon\Carbon::parse($sessionWithQuiz['session']->end_time)->format('h:i A') }}
+                                    </h5>
 
                                     <div class="session-details">
                                         <small><strong>Total Max Occupants:</strong> {{ $sessionWithQuiz['session']->slots->sum('max_students') }}</small>
@@ -124,6 +125,19 @@
                                     </div>
 
                                     <hr>
+
+                                    <!-- Export Labs Button -->
+                                    <div class="text-right">
+                                        <button type="button" class="btn btn-sm btn-primary btn-export-labs" 
+                                                data-session-id="{{ $sessionWithQuiz['session']->id }}">
+                                            Export Labs
+                                        </button>
+                                        <!-- Export Quizzes Button -->
+                                        <button type="button" class="btn btn-sm btn-secondary btn-export-quizzes"
+                                        data-session-id="{{ $sessionWithQuiz['session']->id }}">
+                                            Export Quizzes
+                                        </button>
+                                    </div>
 
                                     <div class="sessions-wrapper">
                                         <h6><strong>Quizzes:</strong></h6>
@@ -135,19 +149,16 @@
                                                     <small>Students Enrolled: {{ $quiz->students->count() }}</small><br>
                                                 </div>
                                                 <div class="w-100 text-center mt-2">
-                                                    <!-- Only show buttons if status is 'pending' -->
                                                     @if($quiz->status == 'pending')
                                                         <button class="btn btn-sm btn-accept text-white" onclick="acceptReservation({{ $quiz->id }})">Accept Reservation</button>
                                                         <button class="btn btn-sm btn-reject text-white" onclick="rejectReservation({{ $quiz->id }})">Reject Reservation</button>
                                                     @elseif($quiz->status == 'rejected')
-                                                        <p>Status: It was rejected before</p> <!-- Show rejection message -->
+                                                        <p>Status: It was rejected before</p>
                                                         <button class="btn btn-sm btn-accept text-white" onclick="acceptReservation({{ $quiz->id }})">Accept Reservation</button>
                                                         <button class="btn btn-sm btn-reject text-white" onclick="rejectReservation({{ $quiz->id }})">Reject Reservation</button>
                                                     @else
-                                                        <p>Status: {{ ucfirst($quiz->status) }}</p> <!-- Display accepted status if applicable -->
-                                                        <!-- Hide buttons if the status is accepted -->
+                                                        <p>Status: {{ ucfirst($quiz->status) }}</p>
                                                     @endif
-
                                                 </div>
                                             </div>
                                         @endforeach
@@ -189,7 +200,7 @@
                             icon: 'success',
                             confirmButtonText: 'OK'
                         }).then(() => {
-                            location.reload();  // Refresh the page to reflect the change
+                            location.reload();
                         });
                     },
                     error: function(xhr, status, error) {
@@ -234,7 +245,7 @@
                             icon: 'success',
                             confirmButtonText: 'OK'
                         }).then(() => {
-                            location.reload();  // Refresh the page to reflect the change
+                            location.reload();
                         });
                     },
                     error: function(xhr, status, error) {
@@ -254,5 +265,70 @@
             }
         });
     }
+
+    // Function to handle the export lab action
+function exportLabs(sessionId) {
+    // Use Laravel's route() helper to generate the correct URL
+    const exportUrl = '{{ route('sessions.exportLabs', ':sessionId') }}'.replace(':sessionId', sessionId);
+
+    fetch(exportUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.downloadLinks && data.downloadLinks.length > 0) {
+                data.downloadLinks.forEach(link => {
+                    const a = document.createElement('a');
+                    a.href = link;
+                    a.download = '';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a); // Clean up the DOM
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Error exporting labs:", error);
+        });
+}
+
+// Attach the exportLabs function to the Export Labs button
+document.querySelectorAll('.btn-export-labs').forEach(button => {
+    button.addEventListener('click', function () {
+        const sessionId = this.getAttribute('data-session-id');
+        exportLabs(sessionId);
+    });
+});
+
+// Function to handle the export quiz action
+function exportQuizzes(sessionId) {
+        // Use Laravel's route() helper to generate the correct URL
+        const exportUrl = '{{ route('sessions.exportQuizzes', ':sessionId') }}'.replace(':sessionId', sessionId);
+
+        fetch(exportUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.downloadLinks && data.downloadLinks.length > 0) {
+                    data.downloadLinks.forEach(link => {
+                        const a = document.createElement('a');
+                        a.href = link;
+                        a.download = '';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a); // Clean up the DOM
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error exporting quizzes:", error);
+            });
+    }
+
+    // Attach the exportQuizzes function to the Export Quizzes button
+    document.querySelectorAll('.btn-export-quizzes').forEach(button => {
+        button.addEventListener('click', function () {
+            const sessionId = this.getAttribute('data-session-id');
+            exportQuizzes(sessionId);
+        });
+    });
+
 </script>
 @endsection

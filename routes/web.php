@@ -13,7 +13,6 @@ use App\Http\Controllers\LabController;
 use App\Http\Controllers\DurationSessionController;
 use App\Http\Controllers\CourseController;
 
-
 // Public Routes
 Route::get('/', [LoginController::class, 'showLoginPage'])->name('home');
 Route::get('/login', [LoginController::class, 'showLoginPage'])->name('login');
@@ -22,7 +21,7 @@ Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
 
 // Routes for Authenticated Users
 Route::middleware(['auth'])->group(function () {
-    
+
     // Admin Routes
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/home', [AdminHomeController::class, 'showHomePage'])->name('home');
@@ -33,8 +32,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/create', [QuizController::class, 'create'])->name('quizzes.create');
             Route::post('/', [QuizController::class, 'store'])->name('quizzes.store');
             Route::delete('/{id}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
+            Route::get('/{courseId}', [QuizController::class, 'getQuizzesByCourse'])->name('quizez.by.course');
         });
-        
+
         // Quiz Assignment
         Route::post('/assign-quiz/{courseId}', [QuizAssignmentController::class, 'assignQuizToCourseStudents'])->name('assignQuiz');
     });
@@ -43,7 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('student')->name('student.')->group(function () {
         Route::get('/home', [StudentHomeController::class, 'showHomePage'])->name('home');
     });
-    
+
     // Exam Settings Management
     Route::prefix('exam-setting')->group(function () {
         Route::get('/', [ExamSettingController::class, 'getExamSetting']);
@@ -64,40 +64,41 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [LabController::class, 'index'])->name('index');
         Route::delete('/{id}', [LabController::class, 'destroy'])->name('destroy');
         Route::put('/{lab}', [LabController::class, 'update'])->name('update');
-        Route::post('/labs', [LabController::class, 'store'])->name('store');         // Create a new lab
-
-
+        Route::post('/labs', [LabController::class, 'store'])->name('store');  // Create a new lab
     });
 
-// Route to export quizzes for admin
-Route::get('/admin/quizzes/{quiz}/export', [QuizController::class, 'export'])->name('admin.quizzes.export');
+    // Course Routes
+    Route::prefix('courses')->group(function () {
+        Route::post('/', [CourseController::class, 'store'])->name('courses.store');
+        Route::delete('/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+        Route::get('/{facultyId}', [CourseController::class, 'getCoursesByFaculty'])->name('get.courses.by.faculty');
+    });
 
-// Route to get quizzes by course
-Route::get('/admin/courses/{course}/quizzes', [QuizController::class, 'getQuizzesByCourse'])->name('admin.courses.quizzes');
+    // Quiz Export
+    Route::get('/admin/quizzes/{quiz}/export', [QuizController::class, 'export'])->name('admin.quizzes.export');
+    Route::get('/admin/courses/{course}/quizzes', [QuizController::class, 'getQuizzesByCourse'])->name('admin.courses.quizzes');
+
+    // Session Routes
+    Route::prefix('sessions')->group(function () {
+        Route::get('/', [DurationSessionController::class, 'index'])->name('sessions.index');
+        Route::get('reserve', [DurationSessionController::class, 'reserve'])->name('sessions.reserve');
+        Route::delete('/{session}', [DurationSessionController::class, 'destroy'])->name('sessions.destroy');
+        Route::get('/{sessionId}/export-labs', [DurationSessionController::class, 'exportSessionLabs'])
+    ->name('sessions.exportLabs');
+
+    Route::get('/{sessionId}/export-quizzes', [DurationSessionController::class, 'exportSessionQuizzes'])
+    ->name('sessions.exportQuizzes');
 
 
-// Route to store a newly created course with a name
-    Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
-    // web.php
-// web.php
-Route::get('/courses/{facultyId}', [CourseController::class, 'getCoursesByFaculty'])->name('get.courses.by.faculty');
+        // Session Quiz Reservations
+        Route::post('reserve-quiz-session', [DurationSessionController::class, 'reservePeriodForQuiz'])->name('sessions.reserveForQuiz');
+        Route::post('reverse-reservation-for-quiz', [DurationSessionController::class, 'reverseReservationForQuiz'])->name('sessions.reverseReservationForQuiz');
+        Route::post('sessions/acceptReservationForQuiz', [DurationSessionController::class, 'acceptReservationForQuiz'])->name('sessions.acceptReservationForQuiz');
 
-// Route to delete a course with a name
-    Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+        // Get Sessions with Quizzes
+        Route::get('sessions/with-quizzes', [DurationSessionController::class, 'getSessionsWithQuizzes'])->name('sessions.withQuizzes');
 
-
-
-    Route::get('sessions', [DurationSessionController::class, 'index'])->name('sessions.index');
-    Route::get('sessions/reserve', [DurationSessionController::class, 'reserve'])->name('sessions.reserve');
-    Route::delete('sessions/{session}', [DurationSessionController::class, 'destroy'])->name('sessions.destroy');
-    
-
-    Route::post('sessions/reserve-quiz-session', [DurationSessionController::class, 'reservePeriodForQuiz'])->name('sessions.reserveForQuiz');
-
-    Route::post('sessions/reverse-reservation-for-quiz', [DurationSessionController::class, 'reverseReservationForQuiz'])->name('sessions.reverseReservationForQuiz');
-    Route::post('sessions/acceptReservationForQuiz', [DurationSessionController::class, 'acceptReservationForQuiz'])->name('sessions.acceptReservationForQuiz');
-
-    Route::get('sessions/with-quizzes', [DurationSessionController::class, 'getSessionsWithQuizzes'])->name('sessions.withQuizzes');
-
-    Route::post('sessions/create-exam-period', [DurationSessionController::class, 'createSessionsForExamPeriod'])->name('sessions.createExamPeriod');
+        // Create Exam Period Sessions
+        Route::post('sessions/create-exam-period', [DurationSessionController::class, 'createSessionsForExamPeriod'])->name('sessions.createExamPeriod');
+    });
 });

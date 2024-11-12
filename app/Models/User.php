@@ -19,6 +19,7 @@ class User extends Authenticatable
         'is_active',
         'profile_picture',
         'last_login',
+        'faculty_id', // Add faculty_id to fillable
     ];
 
     protected $hidden = [
@@ -27,26 +28,27 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'last_login' => 'datetime', 
-        'is_active' => 'boolean', 
-        'profile_picture' => 'string', 
+        'last_login' => 'datetime',
+        'is_active' => 'boolean',
+        'profile_picture' => 'string',
     ];
 
-   
-    public function isSuperAdmin(): bool
+    // Relationship with Faculty model
+    public function faculty()
     {
-        return $this->hasRole('super-admin');
+        return $this->belongsTo(Faculty::class);
     }
 
-    public function isResident(): bool
+    public function isAdmin(): bool
     {
-        return $this->hasRole('resident');
+        return $this->hasRole('admin');
     }
 
-    public function isActive(): bool
+    public function isFacultyAdmin(): bool
     {
-        return (bool) $this->is_active;
+        return $this->hasRole('faculty');
     }
+
 
 
     public function isDeleted(): bool
@@ -54,13 +56,15 @@ class User extends Authenticatable
         return !is_null($this->deleted_at);
     }
 
-    
-
     public static function findUserByEmail(string $email): ?self
     {
         return self::where('email', $email)->first();
     }
 
-
-    
+    // Helper method to get faculty ID for a user
+    public function getFacultyId(): ?int
+    {
+        return $this->faculty_id;
+    }
 }
+

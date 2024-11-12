@@ -8,6 +8,9 @@ use App\Models\Quiz;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Faculty;
+use App\Exports\LabExport;
+use App\Exports\SessionExamExport;
+
 
 use Illuminate\Support\Facades\Log;
 
@@ -205,4 +208,29 @@ class DurationSessionController extends Controller
             return response()->json(['error' => 'An error occurred while accepting the reservation. Please try again later.'], 500);
         }
     }
+
+    public function exportSessionLabs($sessionId)
+{
+    $labExport = new LabExport($sessionId);
+    
+    // Call the method to generate the Excel file for each lab and return the link
+    $downloadLinks = $labExport->downloadLabFiles();
+
+    // Return the download link(s) in a JSON format
+    return response()->json(['downloadLinks' => $downloadLinks]);
+}
+
+public function exportSessionQuizzes($sessionId)
+{
+    // Create an instance of the ExamExport class with the session ID
+    $quizExport = new SessionExamExport($sessionId);
+    
+    // Call the method to generate the Excel file for each quiz and return the link
+    $downloadLinks = $quizExport->downloadQuizFiles();
+
+    // Return the download link(s) in a JSON format
+    return response()->json(['downloadLinks' => $downloadLinks]);
+}
+
+    
 }

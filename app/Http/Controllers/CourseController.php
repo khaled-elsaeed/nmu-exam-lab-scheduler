@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Course;
@@ -11,11 +10,18 @@ class CourseController extends Controller
 {
     public function store(Request $request)
     {
+        // Validate request
         $validated = $request->validate([
             'course_name' => 'required|string',
             'course_code' => 'required|string',
-            'faculty' => 'required|int',
+            'faculty' => 'nullable|int|exists:faculties,id',  
         ]);
+
+        $facultyId = $request->input('faculty', auth()->user()->getFacultyId());
+
+        if (!$facultyId) {
+            return response()->json(['message' => 'User is not associated with any faculty.'], 403);
+        }
 
         try {
             if (Course::whereRaw('LOWER(code) = ?', [strtolower($validated['course_code'])])->exists()) {
@@ -26,15 +32,15 @@ class CourseController extends Controller
                 return response()->json(['message' => 'Course name already exists!'], 400);
             }
 
-
             $course = Course::create([
                 'name' => $validated['course_name'],
                 'code' => $validated['course_code'],
-                'faculty_id' => $validated['faculty'],
+                'faculty_id' => $facultyId,  
             ]);
 
             return response()->json(['message' => 'Course created successfully!', 'course' => $course], 201);
         } catch (\Exception $e) {
+            // Log the error
             Log::error('Error creating course: ' . $e->getMessage(), [
                 'exception' => $e,
                 'course_name' => $validated['course_name'],
@@ -45,51 +51,10 @@ class CourseController extends Controller
         }
     }
 
-    private function getFacultyIdForUserRole($validated)
-    {
-        $user = auth()->user();
-
-        try {
-            if ($user && $user->hasRole('faculty')) {
-                $facultyMap = [
-                    'computer-science-and-engineering' => 'Computer Science & Engineering',
-                    'faculty_of_business' => 'Business',
-                    'faculty_of_law' => 'Law',
-                    'faculty_of_engineering' => 'Engineering',
-                    'faculty_of_science' => 'Science',
-                    'faculty_of_medicine' => 'Medicine',
-                    'faculty_of_dentistry' => 'Dentistry',
-                    'faculty_of_pharmacy' => 'Pharmacy',
-                ];
-
-                foreach ($user->roles as $role) {
-                    if (isset($facultyMap[$role->name])) {
-                        $faculty = Faculty::where('name', $facultyMap[$role->name])->first();
-                        if (!$faculty) {
-                            throw new \Exception("Faculty not found.");
-                        }
-                        return $faculty->id;
-                    }
-                }
-                throw new \Exception('No corresponding faculty found for this user role.');
-            }
-
-            throw new \Exception('Unauthorized user role.');
-        } catch (\Exception $e) {
-            Log::error('Error getting faculty ID for user role: ' . $e->getMessage(), [
-                'user' => $user ? $user->id : 'unknown',
-                'roles' => $user ? $user->roles->pluck('name') : 'no roles'
-            ]);
-            throw $e; 
-        }
-    }
-
-
-    // In your controller
+    // Method to get courses by faculty_id
     public function getCoursesByFaculty($facultyId)
     {
         $courses = Course::where('faculty_id', $facultyId)->get();
         return response()->json($courses);
     }
-
 }

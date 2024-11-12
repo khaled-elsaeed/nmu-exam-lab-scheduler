@@ -36,7 +36,7 @@ class LoginController extends Controller
         if (RateLimiter::tooManyAttempts($rateLimiterKey, 5)) {
             return redirect()
                 ->route('login')
-                ->withErrors(['error' => __('auth.too_many_login_attempts')]);
+                ->withErrors(['error' => 'Too many login attempts. Please try again later.']);
         }
 
         $credentials = $request->only('identifier', 'password');
@@ -45,7 +45,7 @@ class LoginController extends Controller
 
         if (!$user) {
             RateLimiter::hit($rateLimiterKey);
-            return back()->withErrors(['credentials' => __('auth.user_not_found')]);
+            return back()->withErrors(['credentials' => 'User not found.']);
         }
 
         if (Hash::check($credentials['password'], $user->password)) {
@@ -61,8 +61,6 @@ class LoginController extends Controller
                 return redirect()->route('admin.quizzes.index');
             }
 
-            
-
             if ($this->loginService->isStudent($user)) {
                 $studentChecks = $this->loginService->handleStudentAfterLogin($user);
                 if (is_array($studentChecks)) {
@@ -76,6 +74,7 @@ class LoginController extends Controller
         }
 
         RateLimiter::hit($rateLimiterKey);
-        return back()->withErrors(['credentials' => __('auth.invalid_credentials')]);
+        return back()->withErrors(['credentials' => 'Invalid credentials.']);
     }
 }
+

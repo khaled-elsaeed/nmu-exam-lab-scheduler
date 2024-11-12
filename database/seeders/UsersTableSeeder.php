@@ -12,6 +12,7 @@ class UsersTableSeeder extends Seeder
 {
     public function run(): void
     {
+        // Create the main admin
         $adminPassword = Str::random(8) . '@' . Str::random(4) . '1!';
 
         $admin = User::create([
@@ -22,7 +23,7 @@ class UsersTableSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        $admin->assignRole('admin');
+        $admin->assignRole('admin'); 
 
         Log::info("Admin account created:", [
             'email' => $admin->email,
@@ -30,37 +31,30 @@ class UsersTableSeeder extends Seeder
             'password' => $adminPassword
         ]);
 
-        // Get all faculties
         $faculties = Faculty::all();
-        foreach ($faculties as $faculty) {
-            $facultyName = str_replace('&', 'and', $faculty->name);
-            $roleName = strtolower(str_replace(' ', '-', $facultyName));
 
+        foreach ($faculties as $faculty) {
             $password = Str::random(10) . 'A@1' . Str::random(5);
 
-            $user = User::create([
+            // Create a faculty admin user
+            $facultyAdmin = User::create([
                 'email' => Str::slug($faculty->name) . '@nmu.edu.eg',
                 'username' => $faculty->name,
                 'password' => bcrypt($password),
                 'last_login' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
+                'faculty_id' => $faculty->id, 
             ]);
 
-            $user->assignRole('faculty');
-            $user->assignRole($roleName);
+            $facultyAdmin->assignRole('faculty'); 
 
-            Log::info("Faculty account created:", [
-                'email' => $user->email,
-                'roles' => ['faculty', $roleName],
-                'password' => $password
+            Log::info("Faculty admin account created:", [
+                'email' => $facultyAdmin->email,
+                'roles' => ['faculty'],
+                'password' => $password,
+                'faculty_id' => $facultyAdmin->faculty_id
             ]);
         }
     }
 }
-
-
-
-
-
-

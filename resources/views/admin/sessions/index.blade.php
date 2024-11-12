@@ -49,7 +49,7 @@
             </button>
 
             <!-- Download Options -->
-            <div class="div">
+            <!-- <div class="div">
                 <div class="btn-group ms-2" role="group" aria-label="Download Options">
                     <button type="button" class="btn btn-outline-primary dropdown-toggle" id="downloadButton" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fa fa-download"></i> Download
@@ -67,7 +67,7 @@
                         </li>
                     </ul>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>
@@ -87,7 +87,6 @@
                                 <th>Occupied</th>
                                 <th>Empty</th>
                                 <th>Actions</th>
-                                <th>More Details</th> <!-- New Column for Show More Details -->
                             </tr>
                         </thead>
                         <tbody>
@@ -95,8 +94,9 @@
                                 <tr id="session-row-{{ $data['session']->id }}">
                                     <td>{{ $data['session']->id ?? 'N/A' }}</td>
                                     <td>{{ $data['session']->date }}</td>
-                                    <td>{{ $data['session']->start_time }}</td>
-                                    <td>{{ $data['session']->end_time }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($data['session']->start_time)->format('h:i A') }}</td>
+<td>{{ \Carbon\Carbon::parse($data['session']->end_time)->format('h:i A') }}</td>
+
                                     <td>{{ $data['taken'] }}</td> <!-- Total Taken -->
                                     <td>{{ $data['remaining'] }}</td> <!-- Total Not Taken (Remaining) -->
                                     <td>
@@ -106,13 +106,12 @@
                                             <i class="feather icon-trash-2"></i>
                                         </button>
                                     </td>
-                                    <td>
-                                        <!-- Show More Details Button -->
+                                    <!-- <td>
                                         <button type="button" class="btn btn-outline-info show-details-btn" 
                                             data-session-id="{{ $data['session']->id }}" data-bs-toggle="modal" data-bs-target="#sessionDetailsModal">
                                             Show More
                                         </button>
-                                    </td>
+                                    </td> -->
                                 </tr>
                             @endforeach
                         </tbody>

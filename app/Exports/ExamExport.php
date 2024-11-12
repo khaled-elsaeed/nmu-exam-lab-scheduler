@@ -36,12 +36,19 @@ class ExamExport
         });
 
         $row = 2;
+        $quizName = null;  // To store quiz name for the filename
+
         foreach ($data as $entry) {
             // Ensure related data is available to avoid errors
             $student = $entry->student;
             $quiz = $entry->quiz;
             $slot = $entry->slot;
             $session = $slot->session ?? null;
+
+            // Capture the quiz name for the file name
+            if (!$quizName && $quiz) {
+                $quizName = $quiz->name;
+            }
 
             // Populate the spreadsheet
             $sheet->setCellValue("A{$row}", $student->name ?? 'N/A');
@@ -59,9 +66,17 @@ class ExamExport
             $duration = $session ? $session->slot_duration ?? 'N/A' : 'N/A';
             $sheet->setCellValue("E{$row}", $duration);
 
-            // Set Start and End Time from the session
+            // Set Start and End Time from the session (convert to 12-hour format)
             $startTime = $session ? $session->start_time ?? 'N/A' : 'N/A';
             $endTime = $session ? $session->end_time ?? 'N/A' : 'N/A';
+
+            if ($startTime !== 'N/A') {
+                $startTime = date('h:i A', strtotime($startTime));  // Format to 12-hour time
+            }
+            if ($endTime !== 'N/A') {
+                $endTime = date('h:i A', strtotime($endTime));  // Format to 12-hour time
+            }
+
             $sheet->setCellValue("F{$row}", $startTime);
             $sheet->setCellValue("G{$row}", $endTime);
 
@@ -72,9 +87,10 @@ class ExamExport
             $row++;
         }
 
-        // Set headers for download
+        // Set headers for download, using the quiz name for the filename
+        $filename = $quizName ? "{$quizName}_exam_export.xlsx" : "exam_export.xlsx"; // Default filename
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="exam_export.xlsx"');
+        header("Content-Disposition: attachment;filename=\"{$filename}\"");
         header('Cache-Control: max-age=0');
 
         $writer = new Xlsx($spreadsheet);
@@ -82,5 +98,4 @@ class ExamExport
         exit;
     }
 }
-
 

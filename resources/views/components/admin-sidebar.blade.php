@@ -53,7 +53,26 @@
                 </li>
             @endif
 
-            <!-- Quizzes Section (Visible only for 'faculty' role) -->
+
+            @if(auth()->user() && auth()->user()->hasRole('faculty'))
+    <li>
+        <a href="{{ route('admin.quizzes.index') }}">
+            <img src="{{ asset('images/svg-icon/tables.svg') }}" class="img-fluid" alt="quizzes">
+            <span>Quizzes</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('sessions.reserve') }}">
+            <img src="{{ asset('images/svg-icon/layouts.svg') }}" class="img-fluid" alt="sessions">
+            <span>Sessions</span>
+        </a>
+    </li>
+@endif
+
+
+
+               
+
         
             <!-- Logout Link -->
             <li>
