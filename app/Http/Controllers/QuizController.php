@@ -106,7 +106,7 @@ private function handleFileUpload(Request $request, Quiz $quiz)
         $facultyName = $faculty->name;
     } else {
         // Fallback if faculty is not found
-        $facultyName = 'unknown_faculty';
+        $facultyName = 'admin';
     }
 
     // Prepare faculty folder path

@@ -12,6 +12,7 @@ use App\Exports\LabExport;
 use App\Exports\SessionExamExport;
 
 
+
 use Illuminate\Support\Facades\Log;
 
 class DurationSessionController extends Controller
@@ -26,7 +27,22 @@ class DurationSessionController extends Controller
     public function createSessionsForExamPeriod(Request $request)
     {
         try {
+             // Log session creation with relevant details
+             Log::channel('access')->info('Sessions created for exam period', [
+                'user_id' => auth()->user()->username,
+                'timestamp' => now(),
+            ]);
+            
             return $this->reserveSessionService->createSessionsForPeriod();
+            // Log quiz creation
+            Log::channel('access')->info('Quiz created by faculty', [
+                'user_id' => auth()->user()->username,
+                'quiz_id' => $quiz->id,
+                'course_id' => $validated['course_id'],
+                'title' => $validated['title'],
+                'faculty_id' => $facultyId,
+                'timestamp' => now(),
+            ]);
         } catch (\Exception $e) {
             Log::error('Error creating sessions for exam period: ' . $e->getMessage(), [
                 'exception' => $e
@@ -67,6 +83,14 @@ class DurationSessionController extends Controller
     public function reserve()
     {
         try {
+
+            // Log reservation attempt with details
+            Log::channel('access')->info('Attempt to reserve session for quiz', [
+                'user_id' => auth()->user()->username,
+                'quiz_id' => $quiz->id ?? 'N/A',
+                'session_id' => $request->input('session_id'),
+                'timestamp' => now(),
+            ]);
             $faculties  = Faculty::all();
 
             $quizzes = Quiz::all();
@@ -126,6 +150,8 @@ class DurationSessionController extends Controller
     public function reservePeriodForQuiz(Request $request)
     {
         try {
+            
+
             return $this->reserveSessionService->reserveForQuiz(
                 $request->input('session_id'),
                 $request->input('quiz_id')
@@ -141,6 +167,11 @@ class DurationSessionController extends Controller
     public function reverseReservationForQuiz(Request $request)
     {
         try {
+            // Log the attempt to view reservation page
+        Log::channel('access')->info('reverse quiz reservation', [
+            'user_id' => auth()->user()->username,
+            'timestamp' => now(),
+        ]);
             $quizId = $request->input('quiz_id');
             if (!$quizId) {
                 return response()->json(['error' => 'Quiz ID is required'], 400);
@@ -191,6 +222,15 @@ class DurationSessionController extends Controller
     public function acceptReservationForQuiz(Request $request)
     {
         try {
+            // Log quiz creation
+    Log::channel('access')->info('Quiz created by faculty', [
+        'user_id' => auth()->user()->username,
+        'quiz_id' => $quiz->id,
+        'course_id' => $validated['course_id'],
+        'title' => $validated['title'],
+        'faculty_id' => $facultyId,
+        'timestamp' => now(),
+    ]);
             $quiz = Quiz::find($request->quiz_id);
 
             if ($quiz) {
@@ -222,6 +262,15 @@ class DurationSessionController extends Controller
 
 public function exportSessionQuizzes($sessionId)
 {
+    // Log quiz creation
+    Log::channel('access')->info('Quiz created by faculty', [
+        'user_id' => auth()->user()->username,
+        'quiz_id' => $quiz->id,
+        'course_id' => $validated['course_id'],
+        'title' => $validated['title'],
+        'faculty_id' => $facultyId,
+        'timestamp' => now(),
+    ]);
     // Create an instance of the ExamExport class with the session ID
     $quizExport = new SessionExamExport($sessionId);
     
