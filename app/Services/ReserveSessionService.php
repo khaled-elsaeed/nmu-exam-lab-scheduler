@@ -49,7 +49,7 @@ class ReserveSessionService
     
         $slots = $session->slots()
             ->with('lab')
-            ->orderBy('slot_number', 'desc')
+            ->orderBy('slot_number')
             ->get();
 
     
