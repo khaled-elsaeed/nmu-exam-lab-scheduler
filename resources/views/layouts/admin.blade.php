@@ -3,14 +3,13 @@
    <head>
       <meta charset="UTF-8">
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
-      <meta name="description" content="New Mansoura University Quality Assurance offers comfortable, affordable, and secure accommodation for students. Conveniently located near the campus, our modern facilities provide a supportive environment for academic success.">
-      <meta name="keywords" content="New Mansoura University, university Quality Assurance, student accommodation, New Mansoura, dorms, student apartments, affordable student Quality Assurance, university residence, student life, student Quality Assurance, NMU Quality Assurance, New Mansoura student living, secure Quality Assurance for students">
+     
       <meta name="author" content="Themesbox">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
       <meta name="csrf-token" content="{{ csrf_token() }}">
       
       <!-- Dynamic Page Title -->
-      <title>NMU Quality Assurance - @yield('title', 'Default Title')</title>
+      <title>NMU Exam Lab Sheduler - @yield('title', 'Default Title')</title>
 
       <!-- Icons -->
       <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
