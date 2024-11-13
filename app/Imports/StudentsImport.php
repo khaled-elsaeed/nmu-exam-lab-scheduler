@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Student;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -11,43 +12,48 @@ class StudentsImport
     private $importedStudentIds = [];
 
     public function import($file)
-{
-    $spreadsheet = IOFactory::load($file->getRealPath());
-    $sheet = $spreadsheet->getActiveSheet();
-    
-    $highestRow = $sheet->getHighestRow();
-    $highestColumn = $sheet->getHighestColumn();
+    {
+        try {
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            $highestRow = $sheet->getHighestRow();
+            $highestColumn = $sheet->getHighestColumn();
 
-    // Start from row 1, assuming no headers
-    for ($row = 1; $row <= $highestRow; $row++) {
-        $rowData = [];
+            for ($row = 1; $row <= $highestRow; $row++) {
+                $rowData = [];
 
-        // Loop through each column for the current row
-        for ($col = 'A'; $col <= $highestColumn; $col++) {
-            $cell = $sheet->getCell($col . $row);
-            $rowData[$col] = $cell->getValue();
+                for ($col = 'A'; $col <= $highestColumn; $col++) {
+                    $cell = $sheet->getCell($col . $row);
+                    $rowData[$col] = $cell->getValue();
+                }
+
+                // Validate required fields
+                if (empty($rowData['A']) || empty($rowData['B']) || empty($rowData['C'])) {
+                    Log::warning("Row {$row} skipped due to missing required data.");
+                    continue;
+                }
+
+                // Update or create student record
+                $student = Student::updateOrCreate(
+                    ['academic_id' => $rowData['C']],
+                    [
+                        'name' => $rowData['B'],
+                        'academic_id' => $rowData['C'],
+                        'national_id' => $rowData['A'],
+                    ]
+                );
+
+                // Log successful import
+                Log::info("Student imported: ID {$student->id}, Academic ID {$rowData['C']}");
+
+                $this->importedStudentIds[] = $student->id;
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to import students: " . $e->getMessage());
+            throw $e; // Optional: rethrow to let the calling code handle it further
         }
-
-        // Validate the row data (optional)
-        if (empty($rowData['A']) || empty($rowData['B']) || empty($rowData['C'])) {
-            continue; // Skip rows with missing data
-        }
-
-        // Update or create the student record
-        $student = Student::updateOrCreate(
-            ['academic_id' => $rowData['C']],
-            [
-                'name' => $rowData['B'],
-                'academic_id' => $rowData['C'],
-                'national_id' => $rowData['A'],
-            ]
-        );
-
-        // Store the student ID of the imported student
-        $this->importedStudentIds[] = $student->id;
     }
-}
-
 
     public function getImportedStudentIds()
     {

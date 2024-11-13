@@ -13,6 +13,37 @@
     .loading {
         pointer-events: none; /* Disable button interactions */
     }
+
+   /* Card styling for session details */
+.card-body {
+    padding: 1rem;
+}
+
+.card-header {
+    font-size: 1rem;
+    padding: 0.5rem;
+}
+
+.card-footer {
+    padding: 0.5rem;
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+
+
+/* Small Adjustments for Compactness */
+#lab-details-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+
+
+
 </style>
 @endsection
 
@@ -47,30 +78,10 @@
             <button type="button" class="btn btn-outline-success mb-2 mb-md-0" id="createExamPeriodBtn">
                 <i class="feather icon-calendar"></i> Create Exam Period
             </button>
-
-            <!-- Download Options -->
-            <!-- <div class="div">
-                <div class="btn-group ms-2" role="group" aria-label="Download Options">
-                    <button type="button" class="btn btn-outline-primary dropdown-toggle" id="downloadButton" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa fa-download"></i> Download
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#" id="exportExcel">
-                                <i class="fa fa-file-excel"></i> Sessions (Excel)
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" id="exportPDF">
-                                <i class="fa fa-file-pdf"></i> Report (PDF)
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div> -->
         </div>
     </div>
 </div>
+
 <!-- Sessions Table -->
 <div class="row">
     <div class="col-lg-12">
@@ -95,8 +106,7 @@
                                     <td>{{ $data['session']->id ?? 'N/A' }}</td>
                                     <td>{{ $data['session']->date }}</td>
                                     <td>{{ \Carbon\Carbon::parse($data['session']->start_time)->format('h:i A') }}</td>
-<td>{{ \Carbon\Carbon::parse($data['session']->end_time)->format('h:i A') }}</td>
-
+                                    <td>{{ \Carbon\Carbon::parse($data['session']->end_time)->format('h:i A') }}</td>
                                     <td>{{ $data['taken'] }}</td> <!-- Total Taken -->
                                     <td>{{ $data['remaining'] }}</td> <!-- Total Not Taken (Remaining) -->
                                     <td>
@@ -105,13 +115,12 @@
                                             title="Delete Session" data-session-id="{{ $data['session']->id }}">
                                             <i class="feather icon-trash-2"></i>
                                         </button>
-                                    </td>
-                                    <!-- <td>
+
                                         <button type="button" class="btn btn-outline-info show-details-btn" 
                                             data-session-id="{{ $data['session']->id }}" data-bs-toggle="modal" data-bs-target="#sessionDetailsModal">
-                                            Show More
+                                            More Details
                                         </button>
-                                    </td> -->
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -125,19 +134,17 @@
 
 <!-- Modal for More Session Details -->
 <div class="modal fade" id="sessionDetailsModal" tabindex="-1" aria-labelledby="sessionDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="sessionDetailsModalLabel">Session Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <ul>
-                    <li><strong>Session ID:</strong> <span id="session-id"></span></li>
-                    <li><strong>Room:</strong> <span id="session-room"></span></li>
-                    <li><strong>Instructor:</strong> <span id="session-instructor"></span></li>
-                    <li><strong>Notes:</strong> <span id="session-notes"></span></li>
-                </ul>
+                <!-- Lab Details will be injected here as cards -->
+                <div id="lab-details-container" class="row g-2">
+                    <!-- Individual Lab Cards will be inserted here -->
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -170,28 +177,6 @@
         if (!$.fn.dataTable.isDataTable('#default-datatable')) {
             $('#default-datatable').DataTable();
         }
-
-        // Open Modal and Show Session Details
-        $(document).on('click', '.show-details-btn', function() {
-            var sessionId = $(this).data('session-id');
-            var sessionRow = $(this).closest('tr'); // Get the row for the session
-
-            // Fetch session details using AJAX
-            $.ajax({
-                url: '/admin/sessions/details/' + sessionId,
-                method: 'GET',
-                success: function(response) {
-                    // Populate the modal with session details
-                    $('#session-id').text(response.session.id);
-                    $('#session-room').text(response.session.room);
-                    $('#session-instructor').text(response.session.instructor);
-                    $('#session-notes').text(response.session.notes);
-                },
-                error: function() {
-                    alert('Error fetching session details');
-                }
-            });
-        });
 
         // Create Exam Period Button click handler
         $('#createExamPeriodBtn').click(function() {
@@ -252,6 +237,76 @@
                 }
             });
         });
+
+        // Open the "More Details" modal and load lab details
+        $(document).on('click', '.show-details-btn', function() {
+            var sessionId = $(this).data('session-id');
+
+            // Clear any previous lab details
+            $('#lab-details-container').empty();
+
+            // Get the route from Laravel and inject the session ID
+            var sessionLabsUrl = "{{ route('sessions.labs', ':sessionId') }}".replace(':sessionId', sessionId);
+
+            // Fetch lab details using AJAX
+            $.ajax({
+                url: sessionLabsUrl,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        // Loop through all labs and create cards
+                        response.labs.forEach(function(lab) {
+                            // Calculate progress
+                            var progressPercentage = (lab.current_capacity / lab.capacity) * 100;
+                            $('#lab-details-container').append(
+                                `<div class="col-md-4">
+                                    <div class="card shadow-lg border-light mb-3 rounded">
+                                        <div class="card-header text-white bg-primary rounded-top">
+                                            <strong>${lab.location || 'Unknown Location'}</strong>
+                                        </div>
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Capacity:</span>
+                                                <span><i class="feather icon-users"></i> ${lab.capacity || 'N/A'}</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Current:</span>
+                                                <span><i class="feather icon-user"></i> ${lab.current_capacity || '0'}</span>
+                                            </div>
+                                            <!-- Progress bar -->
+                                            <div class="progress mt-2">
+                                                <div class="progress-bar" role="progressbar" style="width: ${progressPercentage}%" aria-valuenow="${lab.current_capacity}" aria-valuemin="0" aria-valuemax="${lab.capacity}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer text-muted text-center p-1">
+                                            <small>Lab Details</small>
+                                        </div>
+                                    </div>
+                                </div>`
+                            );
+                        });
+                    } else {
+                        $('#lab-details-container').append(
+                            `<div class="col-12">
+                                <div class="alert alert-warning text-center" role="alert">
+                                    No lab details found for this session.
+                                </div>
+                            </div>`
+                        );
+                    }
+                },
+                error: function() {
+                    $('#lab-details-container').append(
+                        `<div class="col-12">
+                            <div class="alert alert-danger text-center" role="alert">
+                                Error fetching lab details.
+                            </div>
+                        </div>`
+                    );
+                }
+            });
+        });
     });
 </script>
+
 @endsection

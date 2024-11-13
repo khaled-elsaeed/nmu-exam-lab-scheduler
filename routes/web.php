@@ -85,6 +85,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{session}', [DurationSessionController::class, 'destroy'])->name('sessions.destroy');
         Route::get('/{sessionId}/export-labs', [DurationSessionController::class, 'exportSessionLabs'])
     ->name('sessions.exportLabs');
+    Route::get('/labs/{sessionId}', [DurationSessionController::class, 'getSessionLabs'])->name('sessions.labs');
 
     Route::get('/{sessionId}/export-quizzes', [DurationSessionController::class, 'exportSessionQuizzes'])
     ->name('sessions.exportQuizzes');

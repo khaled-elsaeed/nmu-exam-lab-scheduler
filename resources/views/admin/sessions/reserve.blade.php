@@ -252,7 +252,7 @@
                     hideLoading();
                     if (courses.length > 0) {
                         courses.forEach(course => {
-                            courseDropdown.append(`<option value="${course.id}">${course.name}</option>`);
+                            courseDropdown.append(`<option value="${course.id}">${course.name} (${course.code})</option>`);
                         });
                     } else {
                         courseDropdown.html('<option value="" disabled>No courses available for this faculty</option>');

@@ -49,8 +49,9 @@ class ReserveSessionService
     
         $slots = $session->slots()
             ->with('lab')
-            ->orderBy('slot_number')
+            ->orderBy('slot_number', 'desc')
             ->get();
+
     
         foreach ($slots as $slot) {
             $availableSpace = $slot->max_students - $slot->current_students;

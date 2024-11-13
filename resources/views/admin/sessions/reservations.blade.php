@@ -4,7 +4,6 @@
 
 @section('links')
     <style>
-        /* General Styling */
         .card-header h4 {
             font-size: 1.5rem;
             font-weight: 600;
@@ -127,7 +126,7 @@
                                     <hr>
 
                                     <!-- Export Labs Button -->
-                                    <div class="text-right">
+                                    <div class="text-right m-b-15">
                                         <button type="button" class="btn btn-sm btn-primary btn-export-labs" 
                                                 data-session-id="{{ $sessionWithQuiz['session']->id }}">
                                             Export Labs

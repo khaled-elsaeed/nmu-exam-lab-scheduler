@@ -69,6 +69,7 @@
                         <th>Status</th>
                         <th>Session</th>
                         <th>Students</th>
+                        <th>Created At</th>
                         <th>Actions</th>
                      </tr>
                   </thead>
@@ -76,45 +77,49 @@
                      @forelse($quizzes as $quiz)
                      <tr id="quiz-row-{{ $quiz->id }}">
                         <td>{{ $quiz->name }}</td>
-                        <td>{{ $quiz->course->name }}</td>
+                        <td>{{ $quiz->course->name }} ({{$quiz->course->code}})</td>
                         <td>{{ $examDuration }} minutes</td>
                         <td>
                            @if($quiz->status == 'pending')
-                           <span class="badge bg-warning text-dark">Pending</span>
+                              <span class="badge bg-warning text-dark">Pending</span>
                            @elseif($quiz->status == 'rejected')
-                           <span class="badge bg-danger">Rejected</span>
+                              <span class="badge bg-danger">Rejected</span>
                            @elseif($quiz->status == 'accepted')
-                           <span class="badge bg-success">Accepted</span>
+                              <span class="badge bg-success">Accepted</span>
                            @endif
                         </td>
                         <td>
                            @if($quiz->slots->isNotEmpty() && $quiz->slots->first()->session)
-                           <div>
-                              <strong>Date:</strong> {{ \Carbon\Carbon::parse($quiz->slots->first()->session->date)->format('l, F j, Y') }}<br>
-                              <strong>Time:</strong> {{ \Carbon\Carbon::parse($quiz->slots->first()->session->start_time)->format('g:i A') }} 
-                              to {{ \Carbon\Carbon::parse($quiz->slots->first()->session->end_time)->format('g:i A') }}
-                           </div>
+                              <div>
+                                 <strong>Date:</strong> {{ \Carbon\Carbon::parse($quiz->slots->first()->session->date)->format('l, F j, Y') }}<br>
+                                 <strong>Time:</strong> {{ \Carbon\Carbon::parse($quiz->slots->first()->session->start_time)->format('g:i A') }} 
+                                 to {{ \Carbon\Carbon::parse($quiz->slots->first()->session->end_time)->format('g:i A') }}
+                              </div>
                            @else
-                           <span class="text-muted">Not Reserved Yet</span>
+                              <span class="text-muted">Not Reserved Yet</span>
                            @endif
                         </td>
-                        <td> {{ $quiz->students->count() }}</td>
+                        <td>{{ $quiz->students->count() }}</td>
+                        <td>{{ $quiz->created_at->format('d-m-Y H:i') }}</td>
                         <td>
                            <!-- Delete Quiz Button -->
                            <button type="button" class="btn btn-round btn-danger delete-quiz-btn" 
                               title="Delete Quiz" data-quiz-id="{{ $quiz->id }}">
-                           <i class="feather icon-trash-2"></i>
+                              <i class="feather icon-trash-2"></i>
                            </button>
                            <!-- Export Quiz Button - Show only if status is accepted -->
                            @if($quiz->status == 'accepted')
                            <button type="button" class="btn btn-round btn-info export-quiz-btn" 
                               title="Export Quiz" data-quiz-id="{{ $quiz->id }}">
-                           <i class="feather icon-download"></i>
+                              <i class="feather icon-download"></i>
                            </button>
                            @endif
                         </td>
                      </tr>
                      @empty
+                     <tr>
+                        <td colspan="8" class="text-center">No quizzes available</td>
+                     </tr>
                      @endforelse
                   </tbody>
                </table>
@@ -123,6 +128,7 @@
       </div>
    </div>
 </div>
+
   <!-- Add Quiz Modal -->
 <div class="modal fade" id="addQuizModal" tabindex="-1" role="dialog" aria-labelledby="addQuizModalLabel" aria-hidden="true">
    <div class="modal-dialog" role="document">
@@ -434,7 +440,7 @@ function loadCourses(facultyId) {
         success: function(courses) {
             if (courses.length > 0) {
                 $.each(courses, function(index, course) {
-                    courseDropdown.append('<option value="' + course.id + '">' + course.name + '</option>');
+                    courseDropdown.append('<option value="' + course.id + '">' + course.name + ' (' + course.code + ')' + '</option>');
                 });
                 courseDropdown.prop('disabled', false);
 
