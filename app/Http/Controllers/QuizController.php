@@ -19,7 +19,7 @@ class QuizController extends Controller
 {
     public function index()
     {
-        $faculties  = Faculty::all();
+        $faculties = Faculty::all();
         $examDuration = ExamSetting::pluck('time_slot_duration')->first();
         $quizzes = Quiz::with(['course', 'slots.session'])->get();
 
@@ -29,10 +29,10 @@ class QuizController extends Controller
     private function getCoursesForAuthenticatedFaculty()
     {
         $user = auth()->user();
-        
+
         if ($user && $user->hasRole('faculty')) {
             return Course::whereHas('faculty', function ($query) use ($user) {
-                $query->where('id', $user->getFacultyId());  // Fetch faculty_id directly from the user model
+                $query->where('id', $user->getFacultyId());
             })->get();
         }
 
@@ -45,103 +45,95 @@ class QuizController extends Controller
     }
 
     public function store(Request $request)
-{
-    // Validate request
-    $validated = $request->validate([
-        'course_id' => 'required|exists:courses,id',
-        'title' => 'required|string|max:255',
-        'students_file' => 'required|file|mimes:xlsx,xls',
-        'faculty' => 'nullable|exists:faculties,id', // Optional faculty, must exist if provided
-    ]);
+    {
+        $validated = $request->validate([
+            'course_id' => 'required|exists:courses,id',
+            'title' => 'required|string|max:255',
+            'students_file' => 'required|file|mimes:xlsx,xls',
+            'faculty' => 'nullable|exists:faculties,id',
+        ]);
 
-    // If faculty is not provided in the request, use the authenticated user's faculty
-    $facultyId = $request->input('faculty', auth()->user()->getFacultyId());
+        $facultyId = $request->input(
+            'faculty',
+            auth()
+                ->user()
+                ->getFacultyId()
+        );
 
-    if (!$facultyId) {
-        return response()->json(['message' => 'User is not associated with any faculty.'], 403);
+        if (!$facultyId) {
+            return response()->json(['message' => 'User is not associated with any faculty.'], 403);
+        }
+
+        if (Quiz::where('course_id', $validated['course_id'])->exists()) {
+            return response()->json(['message' => 'Quiz already created for this course.'], 500);
+        }
+
+        $quiz = Quiz::create([
+            'name' => $validated['title'],
+            'course_id' => $validated['course_id'],
+            'status' => 'pending',
+            'faculty_id' => $facultyId,
+        ]);
+
+        Log::channel('access')->info('Quiz created by faculty', [
+            'user_id' => auth()->user()->username,
+            'quiz_id' => $quiz->id,
+            'course_id' => $validated['course_id'],
+            'title' => $validated['title'],
+            'faculty_id' => $facultyId,
+            'timestamp' => now(),
+        ]);
+
+        $this->handleFileUpload($request, $quiz);
+
+        return response()->json(
+            [
+                'message' => 'Quiz and students have been created and assigned successfully!',
+                'quiz' => $quiz,
+                'course' => Course::find($validated['course_id']),
+            ],
+            201
+        );
     }
 
-    // Check if a quiz already exists for the given course
-    if (Quiz::where('course_id', $validated['course_id'])->exists()) {
-        return response()->json(['message' => 'Quiz already created for this course.'], 500);
+    private function handleFileUpload(Request $request, Quiz $quiz)
+    {
+        $facultyId = auth()
+            ->user()
+            ->getFacultyId();
+        $faculty = Faculty::find($facultyId);
+
+        if ($faculty) {
+            $facultyName = $faculty->name;
+        } else {
+            $facultyName = 'admin';
+        }
+
+        $facultyFolderPath = storage_path('app/temp_uploads/' . Str::slug($facultyName));
+
+        if (!file_exists($facultyFolderPath)) {
+            mkdir($facultyFolderPath, 0777, true);
+        }
+
+        $importedStudentIds = $this->importStudentsFromExcel($request->file('students_file'));
+
+        $this->assignStudentsToQuiz($quiz, $importedStudentIds);
+
+        $this->storeUploadedFile($request, $facultyFolderPath);
     }
 
-    // Create the quiz
-    $quiz = Quiz::create([
-        'name' => $validated['title'],
-        'course_id' => $validated['course_id'],
-        'status' => 'pending',
-        'faculty_id' => $facultyId,  
-    ]);
+    private function importStudentsFromExcel($file)
+    {
+        $import = new StudentsImport();
+        $import->import($file);
 
-    // Log quiz creation
-    Log::channel('access')->info('Quiz created by faculty', [
-        'user_id' => auth()->user()->username,
-        'quiz_id' => $quiz->id,
-        'course_id' => $validated['course_id'],
-        'title' => $validated['title'],
-        'faculty_id' => $facultyId,
-        'timestamp' => now(),
-    ]);
-
-    // Handle file upload
-    $this->handleFileUpload($request, $quiz);
-
-    return response()->json([
-        'message' => 'Quiz and students have been created and assigned successfully!',
-        'quiz' => $quiz,
-        'course' => Course::find($validated['course_id']),
-    ], 201);
-}
-
-
-private function handleFileUpload(Request $request, Quiz $quiz)
-{
-    // Get the faculty of the authenticated user
-    $facultyId = auth()->user()->getFacultyId();
-    $faculty = Faculty::find($facultyId);  // Retrieve faculty by ID
-
-    if ($faculty) {
-        // Use the faculty name from the found faculty record
-        $facultyName = $faculty->name;
-    } else {
-        // Fallback if faculty is not found
-        $facultyName = 'admin';
+        return $import->getImportedStudentIds();
     }
 
-    // Prepare faculty folder path
-    $facultyFolderPath = storage_path('app/temp_uploads/' . Str::slug($facultyName));
-
-    // Create the folder if it doesn't exist
-    if (!file_exists($facultyFolderPath)) {
-        mkdir($facultyFolderPath, 0777, true);
+    private function assignStudentsToQuiz(Quiz $quiz, $studentIds)
+    {
+        $quiz->students()->sync($studentIds);
     }
-
-    // Proceed with importing students from Excel and capture the student IDs
-    $importedStudentIds = $this->importStudentsFromExcel($request->file('students_file'));
-
-    // Assign the imported students to the quiz
-    $this->assignStudentsToQuiz($quiz, $importedStudentIds);
-
-    // Store the uploaded file in the appropriate folder
-    $this->storeUploadedFile($request, $facultyFolderPath);
-}
-
-private function importStudentsFromExcel($file)
-{
-    $import = new StudentsImport();
-    $import->import($file);
-
-    // Return the IDs of the imported students
-    return $import->getImportedStudentIds();  // This now returns the IDs of the imported students
-}
-
-private function assignStudentsToQuiz(Quiz $quiz, $studentIds)
-{
-    // Sync the quiz with the imported student IDs
-    $quiz->students()->sync($studentIds);
-}
-
 
     private function storeUploadedFile(Request $request, $facultyFolderPath)
     {
@@ -184,8 +176,7 @@ private function assignStudentsToQuiz(Quiz $quiz, $studentIds)
 
     public function getQuizzesByCourse(Course $course)
     {
-        // Fetch quizzes related to the given course
-        $quizzes = $course->quizzes; // Assuming Course has a 'quizzes' relationship
+        $quizzes = $course->quizzes;
 
         if ($quizzes->isEmpty()) {
             return response()->json([
@@ -194,11 +185,9 @@ private function assignStudentsToQuiz(Quiz $quiz, $studentIds)
             ]);
         }
 
-        // Return quizzes data in JSON format
         return response()->json([
             'success' => true,
             'quizzes' => $quizzes,
         ]);
     }
 }
-

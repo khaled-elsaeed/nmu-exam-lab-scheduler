@@ -11,8 +11,6 @@ use App\Models\Faculty;
 use App\Exports\LabExport;
 use App\Exports\SessionExamExport;
 
-
-
 use Illuminate\Support\Facades\Log;
 
 class DurationSessionController extends Controller
@@ -27,14 +25,13 @@ class DurationSessionController extends Controller
     public function createSessionsForExamPeriod(Request $request)
     {
         try {
-             // Log session creation with relevant details
-             Log::channel('access')->info('Sessions created for exam period', [
+            Log::channel('access')->info('Sessions created for exam period', [
                 'user_id' => auth()->user()->username,
                 'timestamp' => now(),
             ]);
-            
+
             return $this->reserveSessionService->createSessionsForPeriod();
-            // Log quiz creation
+
             Log::channel('access')->info('Quiz created by faculty', [
                 'user_id' => auth()->user()->username,
                 'quiz_id' => $quiz->id,
@@ -45,7 +42,7 @@ class DurationSessionController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error creating sessions for exam period: ' . $e->getMessage(), [
-                'exception' => $e
+                'exception' => $e,
             ]);
             return response()->json(['error' => 'An error occurred while creating the sessions. Please try again later.'], 500);
         }
@@ -74,7 +71,7 @@ class DurationSessionController extends Controller
             return view('admin.sessions.index', compact('sessionData', 'totalSessions'));
         } catch (\Exception $e) {
             Log::error('Error retrieving sessions: ' . $e->getMessage(), [
-                'exception' => $e
+                'exception' => $e,
             ]);
             return response()->json(['error' => 'An error occurred while retrieving sessions. Please try again later.'], 500);
         }
@@ -83,15 +80,13 @@ class DurationSessionController extends Controller
     public function reserve()
     {
         try {
-
-            // Log reservation attempt with details
             Log::channel('access')->info('Attempt to reserve session for quiz', [
                 'user_id' => auth()->user()->username,
                 'quiz_id' => $quiz->id ?? 'N/A',
                 'timestamp' => now(),
             ]);
 
-            $faculties  = Faculty::all();
+            $faculties = Faculty::all();
 
             $quizzes = Quiz::all();
             $sessions = DurationSession::with('labs', 'slots')->get();
@@ -138,10 +133,10 @@ class DurationSessionController extends Controller
                 return $session->slots->count();
             });
 
-            return view('admin.sessions.reserve', compact('sessions', 'totalSessions', 'totalSlots', 'results','faculties', 'quizzes'));
+            return view('admin.sessions.reserve', compact('sessions', 'totalSessions', 'totalSlots', 'results', 'faculties', 'quizzes'));
         } catch (\Exception $e) {
             Log::error('Error retrieving reservation data: ' . $e->getMessage(), [
-                'exception' => $e
+                'exception' => $e,
             ]);
             return response()->json(['error' => 'An error occurred while retrieving reservation data. Please try again later.'], 500);
         }
@@ -150,15 +145,10 @@ class DurationSessionController extends Controller
     public function reservePeriodForQuiz(Request $request)
     {
         try {
-            
-
-            return $this->reserveSessionService->reserveForQuiz(
-                $request->input('session_id'),
-                $request->input('quiz_id')
-            );
+            return $this->reserveSessionService->reserveForQuiz($request->input('session_id'), $request->input('quiz_id'));
         } catch (\Exception $e) {
             Log::error('Error reserving period for quiz: ' . $e->getMessage(), [
-                'exception' => $e
+                'exception' => $e,
             ]);
             return response()->json(['error' => 'An error occurred while reserving the period. Please try again later.'], 500);
         }
@@ -167,11 +157,10 @@ class DurationSessionController extends Controller
     public function reverseReservationForQuiz(Request $request)
     {
         try {
-            // Log the attempt to view reservation page
-        Log::channel('access')->info('reverse quiz reservation', [
-            'user_id' => auth()->user()->username,
-            'timestamp' => now(),
-        ]);
+            Log::channel('access')->info('reverse quiz reservation', [
+                'user_id' => auth()->user()->username,
+                'timestamp' => now(),
+            ]);
             $quizId = $request->input('quiz_id');
             if (!$quizId) {
                 return response()->json(['error' => 'Quiz ID is required'], 400);
@@ -180,7 +169,7 @@ class DurationSessionController extends Controller
             return $this->reserveSessionService->reverseReservation($quizId);
         } catch (\Exception $e) {
             Log::error('Error reversing reservation for quiz: ' . $e->getMessage(), [
-                'exception' => $e
+                'exception' => $e,
             ]);
             return response()->json(['error' => 'An error occurred while reversing the reservation. Please try again later.'], 500);
         }
@@ -194,9 +183,11 @@ class DurationSessionController extends Controller
             $groupedSessions = [];
 
             foreach ($sessions as $session) {
-                $quizzes = $session->slots->flatMap(function ($slot) {
-                    return $slot->quizzes;
-                })->unique('id');
+                $quizzes = $session->slots
+                    ->flatMap(function ($slot) {
+                        return $slot->quizzes;
+                    })
+                    ->unique('id');
 
                 $date = Carbon::parse($session->date)->toDateString();
 
@@ -213,120 +204,96 @@ class DurationSessionController extends Controller
             return view('admin.sessions.reservations', compact('groupedSessions'));
         } catch (\Exception $e) {
             Log::error('Error retrieving sessions with quizzes: ' . $e->getMessage(), [
-                'exception' => $e
+                'exception' => $e,
             ]);
             return response()->json(['error' => 'An error occurred while retrieving sessions with quizzes. Please try again later.'], 500);
         }
     }
 
-   public function acceptReservationForQuiz(Request $request)
-{
-    try {
-        // Validate that 'quiz_id' is provided
-        $request->validate([
-            'quiz_id' => 'required|integer',
-        ]);
-
-        // Find the quiz by ID
-        $quiz = Quiz::find($request->quiz_id);
-        
-        // Check if the quiz was found
-        if (!$quiz) {
-            Log::warning('Quiz not found', [
-                'user_id' => auth()->user()->username,
-                'quiz_id' => $request->quiz_id,
+    public function acceptReservationForQuiz(Request $request)
+    {
+        try {
+            $request->validate([
+                'quiz_id' => 'required|integer',
             ]);
-            return response()->json(['error' => 'Quiz not found.'], 404);
+
+            $quiz = Quiz::find($request->quiz_id);
+
+            if (!$quiz) {
+                Log::warning('Quiz not found', [
+                    'user_id' => auth()->user()->username,
+                    'quiz_id' => $request->quiz_id,
+                ]);
+                return response()->json(['error' => 'Quiz not found.'], 404);
+            }
+
+            $quiz->status = 'accepted';
+            $quiz->save();
+
+            Log::channel('access')->info('Quiz accepted by faculty', [
+                'user_id' => auth()->user()->username,
+                'quiz_id' => $quiz->id,
+                'course_id' => $quiz->course_id ?? 'N/A',
+                'title' => $quiz->title ?? 'N/A',
+                'timestamp' => now(),
+            ]);
+
+            return response()->json(['success' => true], 200);
+        } catch (\Exception $e) {
+            Log::error('Error accepting reservation for quiz', [
+                'user_id' => auth()->user()->username ?? 'guest',
+                'quiz_id' => $request->quiz_id ?? 'N/A',
+                'exception' => $e->getMessage(),
+                'stack_trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json(['error' => 'An error occurred while accepting the reservation. Please try again later.'], 500);
         }
-
-        // Update the quiz status
-        $quiz->status = 'accepted';
-        $quiz->save();
-
-        // Log quiz creation with additional context
-        Log::channel('access')->info('Quiz accepted by faculty', [
-            'user_id' => auth()->user()->username,
-            'quiz_id' => $quiz->id,
-            'course_id' => $quiz->course_id ?? 'N/A',
-            'title' => $quiz->title ?? 'N/A',
-            'timestamp' => now(),
-        ]);
-
-        return response()->json(['success' => true], 200);
-    } catch (\Exception $e) {
-        Log::error('Error accepting reservation for quiz', [
-            'user_id' => auth()->user()->username ?? 'guest',
-            'quiz_id' => $request->quiz_id ?? 'N/A',
-            'exception' => $e->getMessage(),
-            'stack_trace' => $e->getTraceAsString(),
-        ]);
-        
-        return response()->json(['error' => 'An error occurred while accepting the reservation. Please try again later.'], 500);
     }
-}
-
 
     public function exportSessionLabs($sessionId)
-{
-    $labExport = new LabExport($sessionId);
-    
-    // Call the method to generate the Excel file for each lab and return the link
-    $downloadLinks = $labExport->downloadLabFiles();
+    {
+        $labExport = new LabExport($sessionId);
 
-    // Return the download link(s) in a JSON format
-    return response()->json(['downloadLinks' => $downloadLinks]);
-}
+        $downloadLinks = $labExport->downloadLabFiles();
 
-public function exportSessionQuizzes($sessionId)
-{
-    
-    // Create an instance of the ExamExport class with the session ID
-    $quizExport = new SessionExamExport($sessionId);
-    
-    // Call the method to generate the Excel file for each quiz and return the link
-    $downloadLinks = $quizExport->downloadQuizFiles();
-
-    // Return the download link(s) in a JSON format
-    return response()->json(['downloadLinks' => $downloadLinks]);
-}
-
-
-public function getSessionLabs($sessionId)
-{
-    try {
-        // Fetch the session with associated slots and labs
-        $session = DurationSession::with(['slots.lab'])->findOrFail($sessionId);
-
-        // Collect only the lab details
-        $labs = $session->slots->map(function ($slot) {
-            $lab = $slot->lab; // Get the lab associated with this slot
-            return [
-                'lab_id' => $lab->id,
-                'lab_name' => $lab->number, // Assuming `number` is the lab's name or identifier
-                'capacity' => $lab->capacity,
-                'location' => $lab->building . ' - ' . $lab->floor . ' - ' . $lab->number, // Concatenate building, floor, and number
-                'current_capacity' => $slot->current_students, // Get current students in this slot
-            ];
-        });
-
-        // Return the lab details without grouping
-        return response()->json([
-            'success' => true,
-            'labs' => $labs, // Return the list of lab details
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false, 
-            'message' => 'Error fetching session lab details: ' . $e->getMessage()
-        ]);
+        return response()->json(['downloadLinks' => $downloadLinks]);
     }
-}
 
+    public function exportSessionQuizzes($sessionId)
+    {
+        $quizExport = new SessionExamExport($sessionId);
 
+        $downloadLinks = $quizExport->downloadQuizFiles();
 
+        return response()->json(['downloadLinks' => $downloadLinks]);
+    }
 
+    public function getSessionLabs($sessionId)
+    {
+        try {
+            $session = DurationSession::with(['slots.lab'])->findOrFail($sessionId);
 
+            $labs = $session->slots->map(function ($slot) {
+                $lab = $slot->lab;
+                return [
+                    'lab_id' => $lab->id,
+                    'lab_name' => $lab->number,
+                    'capacity' => $lab->capacity,
+                    'location' => $lab->building . ' - ' . $lab->floor . ' - ' . $lab->number,
+                    'current_capacity' => $slot->current_students,
+                ];
+            });
 
-
-    
+            return response()->json([
+                'success' => true,
+                'labs' => $labs,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching session lab details: ' . $e->getMessage(),
+            ]);
+        }
+    }
 }
