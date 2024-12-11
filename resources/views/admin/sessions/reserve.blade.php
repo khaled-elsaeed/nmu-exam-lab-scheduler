@@ -189,7 +189,7 @@
 </div>
 
 {{-- Building Order for Automatic Assignment --}}
-<div class="col-12 d-none" id="automaticAssignmentSection">
+<div class="col-12" id="automaticAssignmentSection">
     <label class="form-label">Building Preference Order</label>
     <ul id="buildingOrder" class="list-group list-group-sortable">
         <li class="list-group-item" data-id="5">Building 5</li>
