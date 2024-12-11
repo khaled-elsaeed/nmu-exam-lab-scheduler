@@ -100,6 +100,18 @@
 
 <div class="container">
     <div class="row">
+         <!-- Export Labs Button -->
+         <div class="text-right m-b-15">
+                                      
+            <!-- Export Quizzes Button -->
+            <button type="button" class="btn btn-sm btn-primary btn-export-labs" >
+                                            Export Labs
+                                        </button>
+                                        <!-- Export Quizzes Button -->
+                                        <button type="button" class="btn btn-sm btn-secondary btn-export-quizzes">
+                                            Export Quizzes
+                                        </button>
+        </div>
         @foreach($groupedSessions as $date => $sessions)
             <div class="col-md-12 mb-4">
                 <div class="card border-primary">
@@ -125,18 +137,7 @@
 
                                     <hr>
 
-                                    <!-- Export Labs Button -->
-                                    <div class="text-right m-b-15">
-                                        <button type="button" class="btn btn-sm btn-primary btn-export-labs" 
-                                                data-session-id="{{ $sessionWithQuiz['session']->id }}">
-                                            Export Labs
-                                        </button>
-                                        <!-- Export Quizzes Button -->
-                                        <button type="button" class="btn btn-sm btn-secondary btn-export-quizzes"
-                                        data-session-id="{{ $sessionWithQuiz['session']->id }}">
-                                            Export Quizzes
-                                        </button>
-                                    </div>
+                                   
 
                                     <div class="sessions-wrapper">
                                         <h6><strong>Quizzes:</strong></h6>
@@ -266,27 +267,37 @@
     }
 
     // Function to handle the export lab action
-function exportLabs(sessionId) {
+function exportLabs() {
     // Use Laravel's route() helper to generate the correct URL
-    const exportUrl = '{{ route('sessions.exportLabs', ':sessionId') }}'.replace(':sessionId', sessionId);
+    const exportUrl = '{{ route('sessions.exportLabs') }}';
 
-    fetch(exportUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.downloadLinks && data.downloadLinks.length > 0) {
-                data.downloadLinks.forEach(link => {
-                    const a = document.createElement('a');
-                    a.href = link;
-                    a.download = '';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a); // Clean up the DOM
-                });
-            }
-        })
-        .catch(error => {
-            console.error("Error exporting labs:", error);
-        });
+    $.ajax({
+       url: exportUrl,
+       type: 'GET',
+       xhrFields: {
+           responseType: 'blob' 
+       },
+       success: function(response, status, xhr) {
+           const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+           let filename = "downloaded_file"; // Default filename
+           if (contentDisposition) {
+               // Extract the filename from Content-Disposition header
+               const matches = contentDisposition.match(/filename="?([^"]+)"?/);
+               if (matches && matches[1]) filename = matches[1];
+           }
+           
+           // Create a download link
+           const link = document.createElement('a');
+           link.href = URL.createObjectURL(response);
+           link.download = filename;
+           link.click();
+           URL.revokeObjectURL(link.href);
+       },
+       error: function(xhr) {
+           swal('Error!', 'Failed to export the quiz.', 'error');
+       },
+       
+   });
 }
 
 // Attach the exportLabs function to the Export Labs button
@@ -298,28 +309,38 @@ document.querySelectorAll('.btn-export-labs').forEach(button => {
 });
 
 // Function to handle the export quiz action
-function exportQuizzes(sessionId) {
+function exportQuizzes() {
         // Use Laravel's route() helper to generate the correct URL
-        const exportUrl = '{{ route('sessions.exportQuizzes', ':sessionId') }}'.replace(':sessionId', sessionId);
+        const exportUrl = '{{ route('sessions.exportQuizzes') }}';
 
-        fetch(exportUrl)
-            .then(response => response.json())
-            .then(data => {
-                if (data.downloadLinks && data.downloadLinks.length > 0) {
-                    data.downloadLinks.forEach(link => {
-                        const a = document.createElement('a');
-                        a.href = link;
-                        a.download = '';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a); // Clean up the DOM
-                    });
-                }
-            })
-            .catch(error => {
-                console.error("Error exporting quizzes:", error);
-            });
-    }
+        $.ajax({
+       url: exportUrl,
+       type: 'GET',
+       xhrFields: {
+           responseType: 'blob' 
+       },
+       success: function(response, status, xhr) {
+           const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+           let filename = "downloaded_file"; // Default filename
+           if (contentDisposition) {
+               // Extract the filename from Content-Disposition header
+               const matches = contentDisposition.match(/filename="?([^"]+)"?/);
+               if (matches && matches[1]) filename = matches[1];
+           }
+           
+           // Create a download link
+           const link = document.createElement('a');
+           link.href = URL.createObjectURL(response);
+           link.download = filename;
+           link.click();
+           URL.revokeObjectURL(link.href);
+       },
+       error: function(xhr) {
+           swal('Error!', 'Failed to export the quiz.', 'error');
+       },
+     
+   });
+        }
 
     // Attach the exportQuizzes function to the Export Quizzes button
     document.querySelectorAll('.btn-export-quizzes').forEach(button => {

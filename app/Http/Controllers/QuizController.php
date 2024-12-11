@@ -190,4 +190,33 @@ class QuizController extends Controller
             'quizzes' => $quizzes,
         ]);
     }
+
+    public function getQuizStudentCount($quizId)
+    {
+        // Log the incoming quizId
+        Log::info('Attempting to fetch student count for quiz ID: ' . $quizId);
+    
+        // Find the quiz by ID
+        $quiz = Quiz::find($quizId);
+        
+        if (!$quiz) {
+            // Log the error if the quiz is not found
+            Log::error('Quiz not found for ID: ' . $quizId);
+            return response()->json(['error' => 'Quiz not found'], 404);
+        }
+    
+        // Log that the quiz was found
+        Log::info('Quiz found for ID: ' . $quizId);
+    
+        // Count how many students are associated with the quiz
+        $studentCount = $quiz->students()->count();
+    
+        // Log the student count
+        Log::info('Student count for quiz ID ' . $quizId . ': ' . $studentCount);
+    
+        // Return the student count as a JSON response
+        return response()->json(['quiz_student_count' => $studentCount]);
+    }
+    
+    
 }

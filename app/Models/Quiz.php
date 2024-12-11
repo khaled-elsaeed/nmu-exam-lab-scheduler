@@ -29,9 +29,8 @@ public function slots()
 
 public function students()
 {
-    return $this->belongsToMany(Student::class, 'quiz_student');  
+    return $this->belongsToMany(Student::class, 'quiz_student', 'quiz_id', 'student_id');
 }
-
 
 
 

@@ -39,21 +39,47 @@
       <span class="visually-hidden">Loading...</span>
    </div>
 </div>
-<!-- Courses and Quizzes Table -->
-<div class="row mb-3">
-   <div class="col-lg-12">
-      <div class="d-flex justify-content-end align-items-center gap-2">
-         <!-- Add Course Button -->
-         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+<div class="d-flex flex-column mb-3">
+   <!-- Title in its own row -->
+   <h2 class="page-title text-primary mb-2">Buildings</h2>
+</div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+   <!-- Left Section with Add Building Button -->
+   <div class="d-flex">
+      
+   </div>
+   <!-- Right Section with Toggle and Download Dropdown -->
+   <div class="d-flex align-items-center">
+      <!-- Toggle Button -->
+      <button class="btn btn-outline-primary btn-sm ms-2 toggle-btn" id="toggleButton" type="button" data-bs-toggle="collapse" 
+         data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+      <i class="fa fa-search-plus"></i>
+      </button>
+      <button type="button" class="btn btn-primary mx-2" data-bs-toggle="modal" data-bs-target="#addCourseModal">
          <i class="feather icon-plus"></i> Add New Course
          </button>
          <!-- Add Quiz Button -->
          <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#addQuizModal">
          <i class="feather icon-plus"></i> Add New Quiz
          </button>
+   </div>
+</div>
+<div class="collapse" id="collapseExample">
+   <div class="search-filter-container card card-body">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+         <!-- Search Box with Icon on the Left -->
+         <div class="search-container d-flex align-items-center mb-3 mb-md-0">
+            <div class="search-icon-container">
+               <i class="fa fa-search search-icon"></i>
+            </div>
+            <input type="search" class="form-control search-input" id="searchBox" placeholder="Search..." />
+         </div>
+        
       </div>
    </div>
 </div>
+
+
 <!-- Quizzes Table -->
 <div class="row">
    <div class="col-lg-12">
@@ -252,12 +278,22 @@
 <script src="{{ asset('plugins/datatables/responsive.bootstrap4.min.js') }}"></script>
 <script src="{{ asset('plugins/sweet-alert2/sweetalert2.min.js') }}"></script>
 <script>
-   $(document).ready(function() {
-       // Initialize DataTables if table exists
-       if ($('#default-datatable').length) {
-           $('#default-datatable').DataTable();
-       }
-   });
+   $(document).ready(function () {
+    let table; // Declare table in the broader scope
+
+    // Initialize DataTables if the table exists
+    if ($('#default-datatable').length) {
+        table = $('#default-datatable').DataTable();
+    }
+
+    // Optional: Trigger search when the user types in the search box
+    $('#searchBox').on('keyup', function () {
+        if (table) { // Ensure table is initialized before calling draw
+            table.search(this.value).draw();
+        }
+    });
+});
+
    
    // Function to show the loading overlay
    function showLoading() {
@@ -265,6 +301,7 @@
        // Disable the modal and background content
        $('body').css('pointer-events', 'none');
    }
+   
    
    // Function to hide the loading overlay
    function hideLoading() {

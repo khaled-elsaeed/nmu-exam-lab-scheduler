@@ -13,8 +13,7 @@ class Student extends Model
     
     public function quizzes()
     {
-        return $this->belongsToMany(Quiz::class, 'quiz_student')
-                    ->withTimestamps();  
+        return $this->belongsToMany(Quiz::class, 'quiz_student', 'student_id', 'quiz_id');
     }
 
     public function slotQuizzes()

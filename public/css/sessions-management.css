@@ -1,0 +1,77 @@
+   .loading-overlay {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background: rgba(0, 0, 0, 0.5);
+   z-index: 9999;
+   display: none;
+   align-items: center;
+   justify-content: center;
+   }
+   .spinner-border {
+   width: 3rem;
+   height: 3rem;
+   border-width: 4px;
+   }
+   .progress-bar {
+   position: relative;
+   height: 20px;
+   }
+   .progress-text {
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   font-size: 0.8rem;
+   font-weight: bold;
+   color: white;
+   }
+   .card-header h5 {
+   font-size: 1.1rem;
+   font-weight: 600;
+   margin-bottom: 10px;
+   }
+   .card-body {
+   padding: 15px;
+   }
+   .btn-reserve {
+   width: 100%;
+   font-size: 0.75rem;
+   padding: 6px 10px;
+   margin-top: 5px;
+   text-align: center;
+   }
+   .sessions-wrapper {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 15px;
+   justify-content: flex-start;
+   }
+   .session-card {
+   width: 32%;
+   min-width: 280px;
+   margin-bottom: 15px;
+   }
+   .session-time {
+   font-weight: bold;
+   font-size: 1rem;
+   margin-bottom: 10px;
+   }
+   .progress-container {
+   width: 100%;
+   margin-bottom: 10px;
+   }
+   @media (max-width: 768px) {
+   .col-md-12 {
+   width: 100%;
+   }
+   .session-card {
+   width: 100%;
+   }
+   .btn-reserve {
+   width: auto;
+   margin-top: 8px;
+   }
+   }

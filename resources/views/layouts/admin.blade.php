@@ -71,6 +71,7 @@
     @yield('scripts')
       <!-- Core JS -->
       <script src="{{ asset('js/core.js') }}"></script>
+      
 
       
 

@@ -3,333 +3,253 @@
 @section('title', 'Sessions Management')
 
 @section('links')
-    <style>
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
+    {{-- CSS Dependencies --}}
+    <link href="{{ asset('plugins/sweet-alert2/sweetalert2.min.css') }}" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-            border-width: 4px;
-        }
-
-        .progress-bar {
-            position: relative;
-            height: 20px;
-        }
-
-        .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: white;
-        }
-
-        .card-header h5 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .card-body {
-            padding: 15px;
-        }
-
-        .btn-reserve {
-            width: 100%;
-            font-size: 0.75rem;
-            padding: 6px 10px;
-            margin-top: 5px;
-            text-align: center;
-        }
-
-        .sessions-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: flex-start;
-        }
-
-        .session-card {
-            width: 32%;
-            min-width: 280px;
-            margin-bottom: 15px;
-        }
-
-        .session-time {
-            font-weight: bold;
-            font-size: 1rem;
-            margin-bottom: 10px;
-        }
-
-        .progress-container {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .col-md-12 {
-                width: 100%;
-            }
-
-            .session-card {
-                width: 100%;
-            }
-
-            .btn-reserve {
-                width: auto;
-                margin-top: 8px;
-            }
-        }
-    </style>
 @endsection
 
 @section('content')
-<link href="{{ asset('plugins/sweet-alert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
 
-<div id="loadingOverlay" class="loading-overlay">
-    <div class="spinner-border text-light" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</div>
 
-<div class="container">
-    <div class="row">
-        @foreach($results as $date => $data)
-            <div class="col-md-12 mb-4">
-                <div class="card border-primary" style="min-height: 380px;">
-                    <div class="card-header text-center">
-                        <h5>{{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <div>
-                            <small style="font-size: 0.9rem;"><strong>Total Max Occupants:</strong> {{ $data['total_max_occupants'] }}</small><br>
-                            <small style="font-size: 0.9rem;"><strong>Total Taken:</strong> {{ $data['total_taken'] }}</small><br>
-                            <small style="font-size: 0.9rem;"><strong>Total Time Taken:</strong> 
-                            {{ $data['total_time_taken'] ? $data['total_time_taken'] . ' minutes' : 'N/A' }}</small>
+    {{-- Main Container --}}
+    <div class="container-fluid px-4">
+        {{-- Page Header --}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="h3 mb-3 text-gray-800">Quiz Session Management</h1>
+            </div>
+        </div>
+
+        {{-- Sessions Grid --}}
+        <div class="row">
+            @forelse($results as $date => $data)
+                <div class="col-12 mb-4">
+                    <div class="card border-primary shadow-sm">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h5 class="m-0">
+                                {{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}
+                            </h5>
                         </div>
-                        <hr>
-                        <div class="sessions-wrapper flex-start">
-                            @foreach($data['sessions'] as $session)
-                                <div class="session-card">
-                                    <div class="progress-container">
-                                        <div class="progress-wrapper">
-                                            @php
-                                                $takenPercentage = ($session['total_taken'] / $session['total_max_occupants']) * 100;
-                                            @endphp
-                                            <div class="session-time mb-2">
-                                                <label for="bar{{ $session['session']->id }}">
-                                                Session ({{ \Carbon\Carbon::parse($session['session']->start_time)->format('h:i A') }} to {{ \Carbon\Carbon::parse($session['session']->end_time)->format('h:i A') }})
-                                                </label>
+                        <div class="card-body">
+                            {{-- Date Summary --}}
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <small class="d-block"><strong>Total Max Occupants:</strong> {{ $data['total_max_occupants'] }}</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="d-block"><strong>Total Taken:</strong> {{ $data['total_taken'] }}</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="d-block">
+                                        <strong>Total Time Taken:</strong> 
+                                        {{ $data['total_time_taken'] ? $data['total_time_taken'] . ' minutes' : 'N/A' }}
+                                    </small>
+                                </div>
+                            </div>
 
-                                                <div><small style="font-size: 0.9rem;"><strong>Total Student Occupied:</strong> 
-                                                    {{ $session['total_taken'] ? $session['total_taken'] . ' students' : 'N/A' }}</small>
-                                                </div>
-                                                <div><small style="font-size: 0.9rem;"><strong>Total Student not:</strong> 
-                                                    {{ $session['total_max_occupants'] ? $session['total_max_occupants'] . ' students' : 'N/A' }}</small>
-                                                </div>
-                                            </div>
+                            <hr>
 
-                                            <div class="w-100">
-                                                <div class="progress">                        
-                                                    <div class="progress-bar" id="bar{{ $session['session']->id }}" role="progressbar" style="width: {{ $takenPercentage }}%" aria-valuenow="{{ $session['total_taken'] }}" aria-valuemin="0" aria-valuemax="{{ $session['total_max_occupants'] }}">
-                                                        <span class="progress-text">{{ $session['total_taken'] }} / {{ $session['total_max_occupants'] }}</span>
+                            {{-- Sessions Grid --}}
+                            <div class="row sessions-wrapper g-3">
+                                @foreach($data['sessions'] as $session)
+                                    <div class="col-lg-4 col-md-6">
+                                        <div class="session-card card h-100 border border-secondary">
+                                            <div class="card-body">
+                                                <div class="session-time mb-3">
+                                                    <h6 class="card-subtitle mb-2 text-muted">
+                                                        {{ \Carbon\Carbon::parse($session['session']->start_time)->format('h:i A') }} 
+                                                        - 
+                                                        {{ \Carbon\Carbon::parse($session['session']->end_time)->format('h:i A') }}
+                                                    </h6>
+                                                </div>
+
+                                                {{-- Occupancy Progress --}}
+                                                @php
+                                                    $takenPercentage = ($session['total_taken'] / $session['total_max_occupants']) * 100;
+                                                @endphp
+                                                <div class="progress mb-3">
+                                                    <div 
+                                                        class="progress-bar" 
+                                                        role="progressbar" 
+                                                        style="width: {{ $takenPercentage }}%" 
+                                                        aria-valuenow="{{ $session['total_taken'] }}" 
+                                                        aria-valuemin="0" 
+                                                        aria-valuemax="{{ $session['total_max_occupants'] }}"
+                                                    >
+                                                        {{ $session['total_taken'] }} / {{ $session['total_max_occupants'] }}
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div class="w-100 text-center">
-                                                <button class="btn btn-sm btn-outline-primary rounded-pill btn-reserve" onclick="openReserveModal({{ $session['session']->id }})">Reserve</button>
+                                                {{-- Session Details --}}
+                                                <div class="session-details mb-3">
+                                                    <small class="d-block">
+                                                        <strong>Occupied:</strong> 
+                                                        {{ $session['total_taken'] ? $session['total_taken'] . ' students' : 'N/A' }}
+                                                    </small>
+                                                    <small class="d-block">
+                                                        <strong>Capacity:</strong> 
+                                                        {{ $session['total_max_occupants'] ? $session['total_max_occupants'] . ' students' : 'N/A' }}
+                                                    </small>
+                                                </div>
+
+                                                {{-- Reserve Button --}}
+                                                <div class="text-center">
+                                                    <button 
+                                                        class="btn btn-primary btn-sm btn-reserve" 
+                                                        data-session-id="{{ $session['session']->id }}"
+                                                    >
+                                                        Reserve Session
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            @endforeach
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        @endforeach
+            @empty
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        No sessions available for the selected period.
+                    </div>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- admin/sessions/partials/reservation-modal.blade.php --}}
+<div class="modal fade" id="reserveQuizSessionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <form id="reserveQuizSessionForm" method="POST" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" id="sessionId" name="session_id">
+            
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Reserve Quiz Session</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="row g-3">
+                        {{-- Faculty Selection --}}
+                        <div class="col-md-4">
+                            <label for="faculty" class="form-label">Select Faculty</label>
+                            <select class="form-select" id="faculty" name="faculty" required>
+                                <option value="">Choose Faculty</option>
+                                @foreach($faculties as $faculty)
+                                    <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Course Selection --}}
+                        <div class="col-md-4">
+                            <label for="course" class="form-label">Select Course</label>
+                            <select class="form-select" id="course" name="course" disabled required>
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+
+                        {{-- Quiz Selection --}}
+                        <div class="col-md-4">
+                            <label for="quiz" class="form-label">Select Quiz</label>
+                            <select class="form-select" id="quiz" name="quiz_id" disabled required>
+                                <option value="">Select Quiz</option>
+                            </select>
+                        </div>
+
+                     
+
+                        <div class="col-md-4">
+                            <label for="student_counts" class="form-label">Students</label>
+                            <input type="text" name="student_counts" id="student_counts" value="" disabled>
+                        </div>
+
+                        {{-- Reservation Type --}}
+<div class="col-12">
+    <label class="form-label">Reservation Type</label>
+    <div class="d-flex gap-3">
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="reserve_type" id="automaticReserve" value="automatic" checked>
+            <label class="form-check-label" for="automaticReserve">
+                Automatic Assignment
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="reserve_type" id="specificReserve" value="specific">
+            <label class="form-check-label" for="specificReserve">
+                Specific Labs
+            </label>
+        </div>
     </div>
 </div>
 
-<div class="modal fade" id="reserveQuizSessionModal" tabindex="-1" role="dialog" aria-labelledby="reserveQuizSessionModalLabel" aria-hidden="true">
-   <div class="modal-dialog" role="document">
-      <form id="reserveQuizSessionForm" method="POST" enctype="multipart/form-data">
-         @csrf
-         <input type="hidden" id="sessionId" name="session_id">
-         <input type="hidden" id="quizSelect" name="quiz_id">
-         <div class="modal-content">
-            <div class="modal-header">
-               <h5 class="modal-title" id="reserveQuizSessionModalLabel">Add New Quiz</h5>
-               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-               <div class="form-group">
-                  <label for="faculty">Select Faculty</label>
-                  <select class="form-control" id="faculty" name="faculty" required>
-                     <option value="" disabled selected>Select Faculty</option>
-                     @foreach($faculties as $faculty)
-                         <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
-                     @endforeach
-                  </select>
-               </div>
-               
-               <div class="form-group">
-                  <label for="course">Select Course</label>
-                  <select class="form-control" id="course" name="course" required disabled>
-                     <option value="">Select Course</option>
-                  </select>
-               </div>
+{{-- Building Order for Automatic Assignment --}}
+<div class="col-12 d-none" id="automaticAssignmentSection">
+    <label class="form-label">Building Preference Order</label>
+    <ul id="buildingOrder" class="list-group list-group-sortable">
+        <li class="list-group-item" data-id="5">Building 5</li>
+        <li class="list-group-item" data-id="7">Building 7</li>
+        <li class="list-group-item" data-id="2">Building 2</li>
+    </ul>
+</div>
 
-               <div class="form-group">
-                  <label for="quiz">Select Quiz</label>
-                  <select class="form-control" id="quiz" name="quiz_id" required disabled>
-                     <option value="">Select Quiz</option>
-                  </select>
-               </div>
-               
+{{-- Specific Labs Selection --}}
+<div class="col-12 d-none" id="specificLabsSection">
+    <label class="form-label">Select Specific Labs</label>
+
+    <!-- Using a simple multi-select element -->
+    <select class="form-control" id="specificLabSelect" name="labs">
+        @foreach($labs as $lab)
+            <option value="{{ $lab->id }}">
+                {{ $lab->building }}-{{ $lab->floor }}-{{ $lab->number }}
+            </option>
+        @endforeach
+    </select>
+
+    <!-- Button to add selected labs -->
+    <button type="button" id="addSpecificLabBtn" class="btn btn-primary mt-3">Add Selected Labs</button>
+
+    <!-- Display the selected labs -->
+    <div id="selectedLabsList" class="mt-3">
+        <h5>Selected Labs:</h5>
+        <ul id="labsDisplayList"></ul>
+    </div>
+</div>
+
+
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Reserve Session</button>
+                </div>
             </div>
-            <div class="modal-footer">
-               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-               <button type="submit" class="btn btn-primary">Save Quiz</button>
-            </div>
-         </div>
-      </form>
-   </div>
+        </form>
+    </div>
 </div>
 @endsection
 
 @section('scripts')
-<script src="{{ asset('plugins/sweet-alert2/sweetalert2.min.js') }}"></script>
+    {{-- JavaScript Dependencies --}}
+    <script src="{{ asset('plugins/sweet-alert2/sweetalert2.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 
-<script>
-    function showLoading() {
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        document.body.style.pointerEvents = 'none';
-    }
+    {{-- Page-specific Scripts --}}
+    <script src="{{ asset('js/pages/sessions-management.js') }}"></script>
+    <script>
 
-    function hideLoading() {
-        document.getElementById('loadingOverlay').style.display = 'none';
-        document.body.style.pointerEvents = 'auto';
-    }
-
-    function openReserveModal(sessionId) {
-        $('#sessionId').val(sessionId);
-        $('#reserveQuizSessionModal').modal('show');
-    }
-
-    $('#faculty').on('change', function() {
-        const facultyId = $(this).val();
-        const courseDropdown = $('#course');
-
-        courseDropdown.html('<option value="">Select Course</option>');
-
-        if (facultyId) {
-            courseDropdown.prop('disabled', false);
-
-            const url = "{{ route('get.courses.by.faculty', ['facultyId' => ':facultyId']) }}".replace(':facultyId', facultyId);
-
-            $.ajax({
-                url: url,
-                type: 'GET',
-                dataType: 'json',
-                beforeSend: showLoading,
-                success: function(courses) {
-                    hideLoading();
-                    if (courses.length > 0) {
-                        courses.forEach(course => {
-                            courseDropdown.append(`<option value="${course.id}">${course.name} (${course.code})</option>`);
-                        });
-                    } else {
-                        courseDropdown.html('<option value="" disabled>No courses available for this faculty</option>');
-                    }
-                },
-                error: function() {
-                    hideLoading();
-                    courseDropdown.html('<option value="" disabled>Error loading courses</option>');
-                }
-            });
-        } else {
-            courseDropdown.prop('disabled', true);
-        }
-    });
-
-    $('#course').on('change', function() {
-        const courseId = $(this).val();
-        const quizDropdown = $('#quiz');
-        
-        quizDropdown.html('<option value="">Select Quiz</option>');
-
-        if (courseId) {
-            quizDropdown.prop('disabled', false);
-
-            const url = "{{ route('admin.courses.quizzes', ['course' => ':courseId']) }}".replace(':courseId', courseId);
-
-            $.ajax({
-                url: url,
-                type: 'GET',
-                dataType: 'json',
-                beforeSend: showLoading,
-                success: function(response) {
-                    hideLoading();
-                    if (response.success && response.quizzes.length > 0) {
-                        response.quizzes.forEach(quiz => {
-                            quizDropdown.append(`<option value="${quiz.id}">${quiz.name}</option>`);
-                        });
-                    } else {
-                        quizDropdown.html('<option value="" disabled>No quizzes available for this course</option>');
-                    }
-                },
-                error: function() {
-                    hideLoading();
-                    quizDropdown.html('<option value="" disabled>Error loading quizzes</option>');
-                }
-            });
-        } else {
-            quizDropdown.prop('disabled', true);
-        }
-    });
-
-    $('#reserveQuizSessionForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        $.ajax({
-            url: "{{ route('sessions.reserveForQuiz') }}",
-            type: "POST",
-            data: $(this).serialize(),
-            beforeSend: showLoading,
-            success: function(response) {
-                $('#reserveQuizSessionModal').modal('hide');
-                swal('success!', 'The reservation has been successfully.', 'success')
-                .then(() => {
-                            location.reload();  // Refresh the page to reflect the change
-                        });
-            },
-            error: function(xhr) {
-                let errorMessage = 'Failed to reserve the quiz.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-                swal('Error!', errorMessage, 'error');
-            },
-            complete: function() {
-                hideLoading();
-            }
-        });
-    });
+    window.routes = {
+        getCoursesByFaculty: "{{ route('get.courses.by.faculty', ['facultyId' => ':facultyId']) }}",
+        getQuizzesByCourse: "{{ route('admin.courses.quizzes', ['course' => ':courseId']) }}",
+        reserveForQuiz: "{{ route('sessions.reserveForQuiz') }}",
+        getQuizStudentCounts: "{{ route('admin.quizzes.student-counts', ['quizId' => ':quizId']) }}",
+    };
 </script>
+
 @endsection

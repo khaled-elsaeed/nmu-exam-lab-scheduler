@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Services\ReserveSessionService;
 use App\Models\DurationSession;
+use App\Models\Lab;
+
 use App\Models\Quiz;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -51,6 +53,7 @@ class DurationSessionController extends Controller
     public function index()
     {
         try {
+            
             $sessions = DurationSession::with('labs', 'slots')->get();
             $totalSessions = $sessions->count();
             $sessionData = [];
@@ -85,7 +88,7 @@ class DurationSessionController extends Controller
                 'quiz_id' => $quiz->id ?? 'N/A',
                 'timestamp' => now(),
             ]);
-
+            $labs = Lab::all();
             $faculties = Faculty::all();
 
             $quizzes = Quiz::all();
@@ -133,7 +136,7 @@ class DurationSessionController extends Controller
                 return $session->slots->count();
             });
 
-            return view('admin.sessions.reserve', compact('sessions', 'totalSessions', 'totalSlots', 'results', 'faculties', 'quizzes'));
+            return view('admin.sessions.reserve', compact('sessions', 'totalSessions', 'totalSlots', 'results', 'faculties', 'quizzes','labs'));
         } catch (\Exception $e) {
             Log::error('Error retrieving reservation data: ' . $e->getMessage(), [
                 'exception' => $e,
@@ -143,16 +146,34 @@ class DurationSessionController extends Controller
     }
 
     public function reservePeriodForQuiz(Request $request)
-    {
-        try {
-            return $this->reserveSessionService->reserveForQuiz($request->input('session_id'), $request->input('quiz_id'));
-        } catch (\Exception $e) {
-            Log::error('Error reserving period for quiz: ' . $e->getMessage(), [
-                'exception' => $e,
-            ]);
-            return response()->json(['error' => 'An error occurred while reserving the period. Please try again later.'], 500);
-        }
+{
+    try {
+        // Validate required parameters
+        $validated = $request->validate([
+            'session_id' => 'required|integer',
+            'quiz_id' => 'required|integer',
+            'building_order' => 'required|array', 
+            'specific_labs' => 'nullable'
+        ]);
+
+        // Retrieve parameters
+        $sessionId = $request->input('session_id');
+        $quizId = $request->input('quiz_id');
+        $buildingOrder = $request->input('building_order');
+        $specificLabs = $request->input('specific_labs');
+
+        return $this->reserveSessionService->reserveForQuiz($sessionId, $quizId, $buildingOrder,$specificLabs);
+
+    } catch (\Exception $e) {
+        Log::error('Error reserving period for quiz: ' . $e->getMessage(), [
+            'exception' => $e,
+        ]);
+        return response()->json(['error' => 'An error occurred while reserving the period. Please try again later.'], 500);
     }
+}
+
+
+    
 
     public function reverseReservationForQuiz(Request $request)
     {
@@ -251,23 +272,30 @@ class DurationSessionController extends Controller
         }
     }
 
-    public function exportSessionLabs($sessionId)
+    public function exportSessionLabs()
     {
-        $labExport = new LabExport($sessionId);
+        $labExport = new LabExport();
 
         $downloadLinks = $labExport->downloadLabFiles();
 
         return response()->json(['downloadLinks' => $downloadLinks]);
     }
-
-    public function exportSessionQuizzes($sessionId)
-    {
-        $quizExport = new SessionExamExport($sessionId);
-
+public function exportSessionQuizzes()
+{
+    try {
+        $quizExport = new SessionExamExport();
         $downloadLinks = $quizExport->downloadQuizFiles();
 
+        if (empty($downloadLinks)) {
+            return response()->json(['error' => 'No quizzes found for export'], 404);
+        }
+
         return response()->json(['downloadLinks' => $downloadLinks]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'An error occurred during export', 'message' => $e->getMessage()], 500);
     }
+}
+
 
     public function getSessionLabs($sessionId)
     {

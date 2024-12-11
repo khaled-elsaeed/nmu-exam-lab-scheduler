@@ -6,9 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Admin\AdminHomeController;
 use App\Http\Controllers\ExamSettingController;
 use App\Http\Controllers\QuizController;
-use App\Http\Controllers\TimeSlotController;
 use App\Http\Controllers\QuizAssignmentController;
-use App\Http\Controllers\StudentHomeController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\DurationSessionController;
 use App\Http\Controllers\CourseController;
@@ -33,16 +31,13 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/', [QuizController::class, 'store'])->name('quizzes.store');
             Route::delete('/{id}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
             Route::get('/{courseId}', [QuizController::class, 'getQuizzesByCourse'])->name('quizez.by.course');
+            Route::get('/stats/{quizId}',[QuizController::class,'getQuizStudentCount'])->name('quizzes.student-counts');
         });
 
         // Quiz Assignment
         Route::post('/assign-quiz/{courseId}', [QuizAssignmentController::class, 'assignQuizToCourseStudents'])->name('assignQuiz');
     });
 
-    // Student Routes
-    Route::prefix('student')->name('student.')->group(function () {
-        Route::get('/home', [StudentHomeController::class, 'showHomePage'])->name('home');
-    });
 
     // Exam Settings Management
     Route::prefix('exam-setting')->group(function () {
@@ -53,11 +48,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}', [ExamSettingController::class, 'update'])->name('exam-settings.update');
     });
 
-    // Time Slot Management
-    Route::prefix('time-slots')->group(function () {
-        Route::post('/generate', [TimeSlotController::class, 'generateTimeSlots'])->name('generateTimeSlots');
-        Route::get('/', [TimeSlotController::class, 'index'])->name('timeSlots.index');
-    });
+
 
     // Lab Management
     Route::prefix('labs')->name('labs.')->group(function () {
@@ -83,11 +74,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [DurationSessionController::class, 'index'])->name('sessions.index');
         Route::get('reserve', [DurationSessionController::class, 'reserve'])->name('sessions.reserve');
         Route::delete('/{session}', [DurationSessionController::class, 'destroy'])->name('sessions.destroy');
-        Route::get('/{sessionId}/export-labs', [DurationSessionController::class, 'exportSessionLabs'])
+        Route::get('/export-labs', [DurationSessionController::class, 'exportSessionLabs'])
     ->name('sessions.exportLabs');
     Route::get('/labs/{sessionId}', [DurationSessionController::class, 'getSessionLabs'])->name('sessions.labs');
 
-    Route::get('/{sessionId}/export-quizzes', [DurationSessionController::class, 'exportSessionQuizzes'])
+    Route::get('/export-quizzes', [DurationSessionController::class, 'exportSessionQuizzes'])
     ->name('sessions.exportQuizzes');
 
 
