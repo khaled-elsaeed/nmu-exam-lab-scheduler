@@ -286,13 +286,12 @@
         table = $('#default-datatable').DataTable();
     }
 
-    // Optional: Trigger search when the user types in the search box
-    $('#searchBox').on('keyup', function () {
-        if (table) { // Ensure table is initialized before calling draw
-            table.search(this.value).draw();
-        }
-    });
-});
+      $('#searchBox').on('keyup', function () {
+         if (table) { // Ensure table is initialized before calling draw
+               table.search(this.value).draw();
+         }
+      });
+   });
 
    
    // Function to show the loading overlay
@@ -302,7 +301,7 @@
        $('body').css('pointer-events', 'none');
    }
    
-   
+
    // Function to hide the loading overlay
    function hideLoading() {
        document.getElementById('loadingOverlay').style.display = 'none'; 
