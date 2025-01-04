@@ -11,24 +11,13 @@ class SessionExamExport
 {
     protected $sessionId;
 
-    /**
-     * Constructor to set the session ID
-     *
-     * @param int|null $sessionId
-     */
     public function __construct($sessionId = null)
     {
         $this->sessionId = $sessionId;
     }
 
-    /**
-     * Generate and return download links for all quiz exports in one file
-     *
-     * @return void
-     */
     public function downloadQuizFiles()
     {
-        // Fetch the quiz data based on the session ID, if provided
         $data = QuizSlotStudent::query()
             ->when($this->sessionId, function ($query) {
                 $query->whereHas('slot.session', function ($query) {
@@ -39,24 +28,22 @@ class SessionExamExport
             ->get()
             ->groupBy('quiz_id');
 
-        // Create a single spreadsheet instance
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Set the header row
-        $sheet->setCellValue('A1', 'Student Name');
-        $sheet->setCellValue('B1', 'University ID');
-        $sheet->setCellValue('C1', 'Quiz');
-        $sheet->setCellValue('D1', 'Faculty');
-        $sheet->setCellValue('E1', 'Lab');
-        $sheet->setCellValue('F1', 'Duration');
-        $sheet->setCellValue('G1', 'Start Time');
-        $sheet->setCellValue('H1', 'End Time');
-        $sheet->setCellValue('I1', 'Session Date');
+        $sheet->setCellValue('A1', 'National ID');
+        $sheet->setCellValue('B1', 'Student Name');
+        $sheet->setCellValue('C1', 'University ID');
+        $sheet->setCellValue('D1', 'Quiz');
+        $sheet->setCellValue('E1', 'Faculty');
+        $sheet->setCellValue('F1', 'Lab');
+        $sheet->setCellValue('G1', 'Duration');
+        $sheet->setCellValue('H1', 'Start Time');
+        $sheet->setCellValue('I1', 'End Time');
+        $sheet->setCellValue('J1', 'Session Date');
 
-        $row = 2; // Start from the second row for data
+        $row = 2;
 
-        // Loop through the grouped data by quiz ID
         foreach ($data as $quizId => $entries) {
             foreach ($entries as $entry) {
                 $student = $entry->student;
@@ -64,16 +51,13 @@ class SessionExamExport
                 $slot = $entry->slot;
                 $session = $slot->session ?? null;
 
-                // Safely fetch faculty name with null check
                 $faculty = $quiz->course->faculty->name ?? 'N/A';
 
-                // Safely fetch lab details
                 $building = $slot->lab->building ?? 'N/A';
                 $floor = $slot->lab->floor ?? 'N/A';
                 $number = $slot->lab->number ?? 'N/A';
                 $labDetails = "{$building}-{$floor}-{$number}";
 
-                // Safely fetch duration, start time, end time, and session date
                 $duration = $session->slot_duration ?? 'N/A';
                 $startTime = $session->start_time ?? null;
                 $endTime = $session->end_time ?? null;
@@ -82,33 +66,29 @@ class SessionExamExport
                 $formattedEndTime = $endTime ? date('h:i A', strtotime($endTime)) : 'N/A';
                 $sessionDate = $session ? date('Y-m-d', strtotime($session->date)) : 'N/A';
 
-                // Populate the rows with data
-                $sheet->setCellValue("A{$row}", $student->name ?? 'N/A');
-                $sheet->setCellValue("B{$row}", $student->academic_id ?? 'N/A');
-                $sheet->setCellValue("C{$row}", $quiz->name ?? 'N/A');
-                $sheet->setCellValue("D{$row}", $faculty);
-                $sheet->setCellValue("E{$row}", $labDetails);
-                $sheet->setCellValue("F{$row}", $duration);
-                $sheet->setCellValue("G{$row}", $formattedStartTime);
-                $sheet->setCellValue("H{$row}", $formattedEndTime);
-                $sheet->setCellValue("I{$row}", $sessionDate);
+                $sheet->setCellValue("A{$row}", $student->national_id ?? 'N/A');
+                $sheet->setCellValue("B{$row}", $student->name ?? 'N/A');
+                $sheet->setCellValue("C{$row}", $student->academic_id ?? 'N/A');
+                $sheet->setCellValue("D{$row}", $quiz->name ?? 'N/A');
+                $sheet->setCellValue("E{$row}", $faculty);
+                $sheet->setCellValue("F{$row}", $labDetails);
+                $sheet->setCellValue("G{$row}", $duration);
+                $sheet->setCellValue("H{$row}", $formattedStartTime);
+                $sheet->setCellValue("I{$row}", $formattedEndTime);
+                $sheet->setCellValue("J{$row}", $sessionDate);
 
-                $row++; // Move to the next row
+                $row++;
             }
         }
 
-        // Generate a filename
         $filename = "all_quizzes_session_{$this->sessionId}_" . uniqid() . ".xlsx";
 
-        // Send headers and output the file for download
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment;filename=\"{$filename}\"");
         header('Cache-Control: max-age=0');
 
-        // Write the spreadsheet to the output
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
-        exit(); // Prevent further code execution after the file download
+        exit();
     }
 }
-

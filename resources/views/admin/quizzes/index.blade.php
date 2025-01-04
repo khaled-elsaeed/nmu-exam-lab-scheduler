@@ -41,7 +41,7 @@
 </div>
 <div class="d-flex flex-column mb-3">
    <!-- Title in its own row -->
-   <h2 class="page-title text-primary mb-2">Buildings</h2>
+   <h2 class="page-title text-primary mb-2">Quizzes</h2>
 </div>
 <div class="d-flex justify-content-between align-items-center mb-3">
    <!-- Left Section with Add Building Button -->
@@ -90,7 +90,8 @@
                   <thead>
                      <tr>
                         <th>Quiz Title</th>
-                        <th>Course Name</th>
+                        <th>Course</th>
+                        <th>Faculty</th>
                         <th>Duration</th>
                         <th>Status</th>
                         <th>Session</th>
@@ -104,6 +105,8 @@
                      <tr id="quiz-row-{{ $quiz->id }}">
                         <td>{{ $quiz->name }}</td>
                         <td>{{ $quiz->course->name }} ({{$quiz->course->code}})</td>
+                        <td>{{ $quiz->course->faculty->name }}</td>
+
                         <td>{{ $examDuration }} minutes</td>
                         <td>
                            @if($quiz->status == 'pending')

@@ -11,15 +11,15 @@ class ExamExport
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-
-        $sheet->setCellValue('A1', 'Student Name');
-        $sheet->setCellValue('B1', 'University ID');
-        $sheet->setCellValue('C1', 'Quiz Name');
-        $sheet->setCellValue('D1', 'Lab');
-        $sheet->setCellValue('E1', 'Duration');
-        $sheet->setCellValue('F1', 'Start Time');
-        $sheet->setCellValue('G1', 'End Time');
-        $sheet->setCellValue('H1', 'Session Date');
+        $sheet->setCellValue('A1', 'National ID');
+        $sheet->setCellValue('B1', 'Student Name');
+        $sheet->setCellValue('C1', 'University ID');
+        $sheet->setCellValue('D1', 'Quiz Name');
+        $sheet->setCellValue('E1', 'Lab');
+        $sheet->setCellValue('F1', 'Duration');
+        $sheet->setCellValue('G1', 'Start Time');
+        $sheet->setCellValue('H1', 'End Time');
+        $sheet->setCellValue('I1', 'Session Date');
 
         $data = QuizSlotStudent::query()
             ->when($quizId, function ($query) use ($quizId) {
@@ -33,7 +33,7 @@ class ExamExport
         });
 
         $row = 2;
-        $quizName = null;
+        $quiz = $data->first()->quiz ?? null;
 
         foreach ($data as $entry) {
             $student = $entry->student;
@@ -41,22 +41,19 @@ class ExamExport
             $slot = $entry->slot;
             $session = $slot->session ?? null;
 
-            if (!$quizName && $quiz) {
-                $quizName = $quiz->name;
-            }
-
-            $sheet->setCellValue("A{$row}", $student->name ?? 'N/A');
-            $sheet->setCellValue("B{$row}", $student->academic_id ?? 'N/A');
-            $sheet->setCellValue("C{$row}", $quiz->name ?? 'N/A');
+            $sheet->setCellValue("A{$row}", $student->national_id ?? 'N/A');
+            $sheet->setCellValue("B{$row}", $student->name ?? 'N/A');
+            $sheet->setCellValue("C{$row}", $student->academic_id ?? 'N/A');
+            $sheet->setCellValue("D{$row}", $quiz->name ?? 'N/A');
 
             $building = $slot->lab->building ?? 'N/A';
             $floor = $slot->lab->floor ?? 'N/A';
             $number = $slot->lab->number ?? 'N/A';
             $concatenatedValue = "{$building}-{$floor}-{$number}";
-            $sheet->setCellValue("D{$row}", $concatenatedValue);
+            $sheet->setCellValue("E{$row}", $concatenatedValue);
 
             $duration = $session ? $session->slot_duration ?? 'N/A' : 'N/A';
-            $sheet->setCellValue("E{$row}", $duration);
+            $sheet->setCellValue("F{$row}", $duration);
 
             $startTime = $session ? $session->start_time ?? 'N/A' : 'N/A';
             $endTime = $session ? $session->end_time ?? 'N/A' : 'N/A';
@@ -68,16 +65,19 @@ class ExamExport
                 $endTime = date('h:i A', strtotime($endTime));
             }
 
-            $sheet->setCellValue("F{$row}", $startTime);
-            $sheet->setCellValue("G{$row}", $endTime);
+            $sheet->setCellValue("G{$row}", $startTime);
+            $sheet->setCellValue("H{$row}", $endTime);
 
             $sessionDate = $session ? $session->date ?? 'N/A' : 'N/A';
-            $sheet->setCellValue("H{$row}", $sessionDate);
+            $sheet->setCellValue("I{$row}", $sessionDate);
 
             $row++;
         }
 
-        $filename = $quizName ? "{$quizName}_exam_export.xlsx" : "exam_export.xlsx";
+        $filename = $quiz 
+            ? "{$quiz->course->code}_" . str_replace(' ', '_', $quiz->course->name) . "_exam_export.xlsx" 
+            : "exam_export.xlsx";
+
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment;filename=\"{$filename}\"");
         header('Cache-Control: max-age=0');
